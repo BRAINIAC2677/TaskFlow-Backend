@@ -1,6 +1,11 @@
-require('dotenv').config()
+import dotenv from 'dotenv';
+import pgpromise from 'pg-promise';
 
-const pgp = require('pg-promise')()
+const pgp = pgpromise();
+
+
+dotenv.config();
+
 const connection = {
   host: process.env.SUPABASEHOST,
   port: process.env.SUPABASEPORT,
@@ -11,4 +16,4 @@ const connection = {
 };
 const db = pgp(connection);
 
-module.exports = db;
+export default db;
