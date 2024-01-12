@@ -70,13 +70,28 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/inline_response_200"
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: "Access token for authenticated user"
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+                  user_id:
+                    type: string
+                    description: "ID of the authenticated user"
         "400":
           description: Unauthorized
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/inline_response_400"
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+                  message:
+                    type: string
+                    example: Invalid username or password
   /register:
     post:
       tags:
@@ -107,7 +122,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/inline_response_200_1"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully logged out
+                  links:
+                    type: object
+                    example: https://taskflow-express-api.vercel.app/
         "500":
           description: Internal Server Error
   /get-public-profile/{user-id}:
@@ -222,7 +244,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/inline_response_200_2"
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Profile successfully deleted
+                  links:
+                    type: object
+                    example: https://taskflow-express-api.vercel.app/
         "500":
           description: Internal Server Error
   /update-profile-picture:
@@ -873,31 +902,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    task_id:
-                      type: string
-                    task_name:
-                      type: string
-                    task_cover_photo:
-                      type: string
-                      format: url
-                    task_label_color:
-                      type: string
-                    task_deadline:
-                      type: string
-                      format: date-time
-                example:
-                  - task_id: "1"
-                    task_name: "Task 1"
-                    task_cover_photo: "https://source.unsplash.com/400x300/?work"
-                    task_label_color: "#FF0000"
-                    task_deadline: "2023-08-05T00:00:00.000Z"
-                  - task_id: "2"
-                    task_name: "Task 2"
-                    task_cover_photo: "https://source.unsplash.com/400x300/?work"
-                    task_label_color: "#FF0000"
-                    task_deadline: "2023-08-05T00:00:00.000Z"
+                  $ref: "#/components/schemas/task_shortened_form"
         "401":
           description: Unauthorized - User is not a member of the task list
         "404":
@@ -926,86 +931,8 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  task_id:
-                    type: string
-                    example: "1"
-                  task_name:
-                    type: string
-                    example: "Task 1"
-                  task_description:
-                    type: string
-                    example: "This is a sample task"
-                  task_cover_photo:
-                    type: string
-                    format: url
-                    example: "https://source.unsplash.com/400x300/?work"
-                  task_label_color:
-                    type: string
-                    example: "#FF0000"
-                  task_start_time:
-                    type: string
-                    format: date-time
-                    example: "2023-08-05T00:00:00.000Z"
-                  task_deadline:
-                    type: string
-                    format: date-time
-                    example: "2023-08-05T00:00:00.000Z"
-                  task_labels:
-                    type: array
-                    description: Labels of the task
-                    items:
-                      type: object
-                      properties:
-                        label_id:
-                          type: string
-                        label_name:
-                          type: string
-                    example:
-                      - label_id: "1"
-                        label_name: "bugfix"
-                      - label_id: "2"
-                        label_name: "feature-release"
-                  task_assignees:
-                    type: array
-                    description: Assignees of the task
-                    items:
-                      type: object
-                      properties:
-                        user_id:
-                          type: string
-                        user_name:
-                          type: string
-                        profile_picture:
-                          type: string
-                          format: url
-                    example:
-                      - user_id: "1"
-                        user_name: "Sadat999"
-                        profile_picture: "https://source.unsplash.com/400x300/?work"
-                      - user_id: "2"
-                        user_name: "BRAINIAC77"
-                        profile_picture: "https://source.unsplash.com/400x300/?work"
-                  task_checklist_items:
-                    type: array
-                    description: Checklist items of the task
-                    items:
-                      type: object
-                      properties:
-                        item_id:
-                          type: string
-                        item_name:
-                          type: string
-                        item_status:
-                          type: boolean
-                    example:
-                      - item_id: "1"
-                        item_name: "Write the code"
-                        item_status: true
-                      - item_id: "2"
-                        item_name: "Read the documentation"
-                        item_status: false
+                $ref: "#/components/schemas/task_detailed_form"
+
         "401":
           description: Unauthorized - User is not assigned for this task
         "404":
@@ -1564,7 +1491,7 @@ components:
           example: "sadatho2014@gmail.com"
         phone_number:
           type: string
-          example: "01700000000"
+          example: "01712345678"
         password:
           type: string
           format: password
@@ -1581,43 +1508,6 @@ components:
           format: password
           example: "123456"
           description: Password will be hashed before sending to the server
-    inline_response_200:
-      type: object
-      properties:
-        token:
-          type: string
-          description: "Access token for authenticated user"
-          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-        user_id:
-          type: string
-          description: "ID of the authenticated user"
-    inline_response_200_1:
-      type: object
-      properties:
-        message:
-          type: string
-          example: Successfully logged out
-        links:
-          type: object
-          example: https://taskflow-express-api.vercel.app/
-    inline_response_200_2:
-      type: object
-      properties:
-        message:
-          type: string
-          example: Profile successfully deleted
-        links:
-          type: object
-          example: https://taskflow-express-api.vercel.app/
-    inline_response_400:
-      type: object
-      properties:
-        error:
-          type: string
-          example: Unauthorized
-        message:
-          type: string
-          example: Invalid username or password
     user_public_profile_response:
       type: object
       properties:
@@ -1710,3 +1600,100 @@ components:
         message:
           type: string
           example: The specified task ID does not exist
+    task_shortened_form:
+      type: object
+      properties:
+        task_id:
+          type: string
+          example: "1"
+        task_name:
+          type: string
+          example: "Read the documentation"
+        task_label_color:
+          type: string
+          example: "#FF0000"
+        task_deadline:
+          type: string
+          format: date-time
+          example: "2023-08-05T00:00:00.000Z"
+    task_detailed_form:
+      type: object
+      properties:
+        task_id:
+          type: string
+          example: "1"
+        task_name:
+          type: string
+          example: "Task 1"
+        task_description:
+          type: string
+          example: "This is a sample task"
+        task_cover_photo:
+          type: string
+          format: url
+          example: "https://source.unsplash.com/400x300/?work"
+        task_label_color:
+          type: string
+          example: "#FF0000"
+        task_start_time:
+          type: string
+          format: date-time
+          example: "2023-08-05T00:00:00.000Z"
+        task_deadline:
+          type: string
+          format: date-time
+          example: "2023-08-05T00:00:00.000Z"
+        task_labels:
+          type: array
+          description: Labels of the task
+          items:
+            type: object
+            properties:
+              label_id:
+                type: string
+              label_name:
+                type: string
+          example:
+            - label_id: "1"
+              label_name: "bugfix"
+            - label_id: "2"
+              label_name: "feature-release"
+        task_assignees:
+          type: array
+          description: Assignees of the task
+          items:
+            type: object
+            properties:
+              user_id:
+                type: string
+              user_name:
+                type: string
+              profile_picture:
+                type: string
+                format: url
+          example:
+            - user_id: "1"
+              user_name: "Sadat999"
+              profile_picture: "https://source.unsplash.com/400x300/?work"
+            - user_id: "2"
+              user_name: "BRAINIAC77"
+              profile_picture: "https://source.unsplash.com/400x300/?work"
+        task_checklist_items:
+          type: array
+          description: Checklist items of the task
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+              item_name:
+                type: string
+              item_status:
+                type: boolean
+          example:
+            - item_id: "1"
+              item_name: "Write the code"
+              item_status: true
+            - item_id: "2"
+              item_name: "Read the documentation"
+              item_status: false
