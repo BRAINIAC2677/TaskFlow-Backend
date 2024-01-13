@@ -217,6 +217,63 @@ paths:
                   bio: "In this world, there are two types of people. Those who procrastinate, and those who don't."
         "500":
           description: Internal Server Error
+  /get-usernames:
+    post:
+      tags:
+        - User Profile
+      summary: Get usernames of users matching the search query, which will be used in autocompletion.
+      requestBody:
+        description: Search query and number of usernames to retrieve
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                search_query:
+                  type: string
+                  example: "Asif"
+                number_of_usernames:
+                  type: integer
+                  example: 10
+      responses:
+        "200":
+          description: Usernames successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    user_id:
+                      type: string
+                    user_name:
+                      type: string
+                example:
+                  - user_id: "c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r"
+                    user_name: "AsifAzad"
+                  - user_id: "d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t"
+                    user_name: "Asif123"
+                  - user_id: "e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u"
+                    user_name: "AsifAlShahriar"
+                  - user_id: "f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v"
+                    user_name: "AsifAhmed"
+                  - user_id: "g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w"
+                    user_name: "AsifNazrul"
+                  - user_id: "h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x"
+                    user_name: "AsifRahman"
+                  - user_id: "i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y"
+                    user_name: "AsifKarimAbir"
+                  - user_id: "j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z"
+                    user_name: "AsifKhan"
+                  - user_id: "k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a"
+                    user_name: "AsifKabir"
+                  - user_id: "l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b"
+                    user_name: "AsifKamal"
+        "400":
+          description: Bad request - Invalid input
+        "500":
+          description: Internal Server Error
   /update-profile-settings:
     put:
       tags:
@@ -432,7 +489,11 @@ paths:
                           task_label_color: "#652921"
                           task_overall_progress: 0.64
         "401":
-          description: Unauthorized - User is not a member of the board
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonMemberBoardAccessResponse"
         "404":
           description: Board not found
           content:
@@ -485,7 +546,11 @@ paths:
                       profile_picture: "https://unsplash.com/photos/a-person-standing-on-a-beach-with-a-surfboard-RI5FdLjKAXU"
                       member_role: 2
         "401":
-          description: Unauthorized - User is not an admin of the board
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonAdminBoardAccessResponse"
         "404":
           description: Board not found
           content:
@@ -523,7 +588,11 @@ paths:
         "200":
           description: Board settings successfully updated
         "401":
-          description: Unauthorized - User is not an admin of the board
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonAdminBoardAccessResponse"
         "404":
           description: Board not found
           content:
@@ -556,7 +625,11 @@ paths:
         "200":
           description: Member successfully added
         "401":
-          description: Unauthorized - User is not an admin of the board
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonAdminBoardAccessResponse"
         "404":
           description: Board or user not found
           content:
@@ -596,7 +669,11 @@ paths:
         "200":
           description: Member successfully removed
         "401":
-          description: Unauthorized - User is not the owner of the board
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonOwnerBoardAccessResponse"
         "404":
           description: Board or user not found
           content:
@@ -640,7 +717,11 @@ paths:
         "200":
           description: Member access successfully updated
         "401":
-          description: Unauthorized - User is not the owner of the board
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonOwnerBoardAccessResponse"
         "404":
           description: User not a member of the board
           content:
@@ -675,31 +756,19 @@ paths:
                 board_members:
                   - user_id: "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p"
                     user_name: "Sadat999"
-                    full_name: "Mohammad Sadat Hossain"
-                    profile_picture: "https://unsplash.com/photos/a-long-exposure-photo-of-a-mountain-road-l2scWsGyq_U"
                     member_role: 1
                   - user_id: "c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r"
                     user_name: "BRAINIAC77"
-                    full_name: "Asif Azad"
-                    profile_picture: "https://unsplash.com/photos/a-person-standing-on-a-beach-with-a-surfboard-RI5FdLjKAXU"
                     member_role: 2
                   - user_id: "d4e5f6g7h8i9j0k1l2m3n4o5p6q7r"
                     user_name: "shattik420"
-                    full_name: "Shattik Islam Rhythm"
-                    profile_picture: "https://unsplash.com/photos/a-view-of-a-mountain-range-in-the-desert-t3dlLOhdEzs"
                     member_role: 2
                   - user_id: "e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t"
                     user_name: "Tahmid-404"
-                    full_name: "Nafis Tahmid"
-                    profile_picture: "https://unsplash.com/photos/an-aerial-view-of-a-desert-with-rocks-and-sand-4q87Z96NBYg"
                   - user_id: "f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u"
                     user_name: "shitdroid"
-                    full_name: "Wasif Hamid"
-                    profile_picture: "https://unsplash.com/photos/a-couple-of-lounge-chairs-sitting-next-to-a-swimming-pool-7XMl6DyEyGk"
                   - user_id: "g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v"
                     user_name: "amirulislamalif"
-                    full_name: Amirul Islam Alif
-                    profile_picture: "https://unsplash.com/photos/a-person-looking-out-from-a-cave-in-the-desert-9bE0LlCrX2M"
       responses:
         "200":
           description: Board successfully created
@@ -739,7 +808,11 @@ paths:
         "200":
           description: Board successfully deleted
         "401":
-          description: Unauthorized - User is not the owner of the board
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonOwnerBoardAccessResponse"
         "404":
           description: Board not found
           content:
@@ -803,7 +876,11 @@ paths:
                       list_deadline: "2023-10-20T00:00:00.000Z"
                       list_overall_progress: 0.33
         "401":
-          description: Unauthorized - User does not have view access to the list
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonMemberBoardAccessResponse"
         "404":
           description: Board not found
           content:
@@ -856,7 +933,11 @@ paths:
                     type: string
                     example: "API & Architecture Presentation"
         "401":
-          description: Unauthorized - User does not have edit access to the board
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonAdminBoardAccessResponse"
         "404":
           description: Board not found
           content:
@@ -895,7 +976,11 @@ paths:
         "200":
           description: List successfully deleted
         "401":
-          description: Unauthorized - User does not have edit access to the list
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonAdminListAccessResponse"
         "404":
           description: List not found
           content:
@@ -950,7 +1035,11 @@ paths:
                       task_label_color: "#F2F541"
                       task_overall_progress: 1.00
         "401":
-          description: Unauthorized - User does not have view access to the list
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonMemberListAccessResponse"
         "404":
           description: List not found
           content:
@@ -994,7 +1083,11 @@ paths:
         "200":
           description: Member access successfully updated
         "401":
-          description: Unauthorized - User does not have admin access to the list
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonAdminListAccessResponse"
         "404":
           description: User or task list not found
           content:
@@ -1065,7 +1158,11 @@ paths:
                       full_name: Amirul Islam Alif
                       profile_picture: "https://unsplash.com/photos/a-person-looking-out-from-a-cave-in-the-desert-9bE0LlCrX2M"
         "401":
-          description: Unauthorized - User does not have admin access to the list
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonAdminListAccessResponse"
         "404":
           description: List not found
           content:
@@ -1102,7 +1199,11 @@ paths:
         "200":
           description: List settings successfully updated
         "401":
-          description: Unauthorized - User does not have edit access to the list
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonAdminListAccessResponse"
         "404":
           description: List not found
           content:
@@ -1164,7 +1265,11 @@ paths:
                     task_label_color: "#F2F541"
                     task_overall_progress: 1.00
         "401":
-          description: Unauthorized - User does not have view access to the list
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonMemberListAccessResponse"
         "404":
           description: List not found
           content:
@@ -1234,7 +1339,11 @@ paths:
                       item_status: false
 
         "401":
-          description: Unauthorized - User does not have view access to the task
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonMemberTaskAccessResponse"
         "404":
           description: Task not found
           content:
@@ -1314,14 +1423,6 @@ paths:
                   message:
                     type: string
                     example: Label with this name already exists
-        "401":
-          description: Unauthorized - User does not have edit access to the task
-        "404":
-          description: Task not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NonExistentTaskResponse"
         "500":
           description: Internal Server Error
   /update-checklist/{task-id}:
@@ -1375,7 +1476,11 @@ paths:
         "400":
           description: Bad request - Invalid input
         "401":
-          description: Unauthorized - User does not have edit access to the task
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonAdminTaskAccessResponse"
         "404":
           description: Task not found
           content:
@@ -1426,7 +1531,11 @@ paths:
         "400":
           description: Bad request - Invalid input
         "401":
-          description: Unauthorized - User does not have edit access to the task
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonAdminTaskAccessResponse"
         "404":
           description: Task not found
           content:
@@ -1465,7 +1574,11 @@ paths:
         "400":
           description: Bad request - Invalid input
         "401":
-          description: Unauthorized - User does not have edit access to the task
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonAdminTaskAccessResponse"
         "404":
           description: Task not found
           content:
@@ -1509,7 +1622,11 @@ paths:
         "200":
           description: Member access successfully updated
         "401":
-          description: Unauthorized - User does not have admin access to the task
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonAdminTaskAccessResponse"
         "404":
           description: User or task not found
           content:
@@ -1608,7 +1725,11 @@ paths:
         "400":
           description: Bad request - Invalid input
         "401":
-          description: Unauthorized - User is not an assignee of this task
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonMemberTaskAccessResponse"
         "404":
           description: Task not found
           content:
@@ -1661,7 +1782,18 @@ paths:
         "400":
           description: Bad request - Invalid input
         "401":
-          description: Unauthorized - User does not have messaging access on the task
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized Access
+                  message:
+                    type: string
+                    example: You do not have messaging access on this task
         "404":
           description: Task not found
           content:
@@ -1727,7 +1859,11 @@ paths:
         "400":
           description: Bad request - Invalid input
         "401":
-          description: Unauthorized - User is not a viewer of this task
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonMemberTaskAccessResponse"
         "404":
           description: Task not found
           content:
@@ -1780,7 +1916,18 @@ paths:
         "400":
           description: Bad request - Invalid input
         "401":
-          description: Unauthorized - User does not have commenting access on the task
+          description: Unauthorized Access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized Access
+                  message:
+                    type: string
+                    example: You do not have commenting access on this task
         "404":
           description: Task not found
           content:
@@ -1951,7 +2098,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NonExistentNotificationResponse"
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Notification not found
+                  message:
+                    type: string
+                    example: No such notification found for the specified user
         "500":
           description: Internal Server Error
   /get-overview-data:
@@ -2535,7 +2689,7 @@ components:
           example: User not found
         message:
           type: string
-          example: The specified user ID does not exist
+          example: No user found with the specified user ID
     NonExistentBoardResponse:
       type: object
       properties:
@@ -2544,16 +2698,16 @@ components:
           example: Board not found
         message:
           type: string
-          example: The specified board ID does not exist
+          example: No board found with the specified board ID
     NonExistentListResponse:
       type: object
       properties:
         error:
           type: string
-          example: Task list not found
+          example: List not found
         message:
           type: string
-          example: The specified task list ID does not exist
+          example: No list found with the specified list ID
     NonExistentTaskResponse:
       type: object
       properties:
@@ -2562,13 +2716,76 @@ components:
           example: Task not found
         message:
           type: string
-          example: The specified task ID does not exist
-    NonExistentNotificationResponse:
+          example: No task found with the specified task ID
+    # NonExistentNotificationResponse:
+    #   type: object
+    #   properties:
+    #     error:
+    #       type: string
+    #       example: Notification not found
+    #     message:
+    #       type: string
+    #       example: No notification found with the specified notification ID
+    NonOwnerBoardAccessResponse:
       type: object
       properties:
         error:
           type: string
-          example: Notification not found
+          example: Unauthorized
         message:
           type: string
-          example: The specified notification ID does not exist
+          example: You do not have owner access to this board
+    NonAdminBoardAccessResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Unauthorized
+        message:
+          type: string
+          example: You do not have admin access to this board
+    NonMemberBoardAccessResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Unauthorized
+        message:
+          type: string
+          example: You do not have view access to this board
+    NonMemberListAccessResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Unauthorized
+        message:
+          type: string
+          example: You do not have view access to this list
+    NonAdminListAccessResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Unauthorized
+        message:
+          type: string
+          example: You do not have admin access to this list
+    NonMemberTaskAccessResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Unauthorized
+        message:
+          type: string
+          example: You do not have view access to this task
+    NonAdminTaskAccessResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Unauthorized
+        message:
+          type: string
+          example: You do not have admin access to this task
