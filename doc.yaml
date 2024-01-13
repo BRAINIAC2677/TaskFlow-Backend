@@ -56,13 +56,22 @@ paths:
   /login:
     post:
       tags:
-        - Authentication
+        - General
       summary: User login
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/login_body"
+              type: object
+              properties:
+                user_name:
+                  type: string
+                  example: "Sadat999"
+                password:
+                  type: string
+                  format: password
+                  example: "p@sSw0rD"
+                  description: Password will be hashed before sending to the server
         required: true
       responses:
         "200":
@@ -74,13 +83,14 @@ paths:
                 properties:
                   token:
                     type: string
-                    description: "Access token for authenticated user"
+                    description: Access token for authenticated user
                     example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
                   user_id:
                     type: string
-                    description: "ID of the authenticated user"
+                    description: ID of the authenticated user
+                    example: "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p"
         "400":
-          description: Unauthorized
+          description: Unauthorized attempt - Invalid credentials
           content:
             application/json:
               schema:
@@ -88,33 +98,43 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: Unauthorized
                   message:
                     type: string
-                    example: Invalid username or password
+                    example: "Invalid username or password"
   /register:
     post:
       tags:
-        - Authentication
+        - General
       summary: Register a new user
       requestBody:
         description: User registration details
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/registration_body"
+              $ref: "#/components/schemas/RegistrationInformation"
         required: true
       responses:
         "200":
-          description: User successfully registered
+          description: Successful registration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User successfully registered
+                  links:
+                    type: object
+                    example: https://taskflow-express-api.vercel.app/login
         "400":
-          description: Bad request - Invalid input
+          description: Bad request - invalid input
         "500":
           description: Internal Server Error
   /logout:
     post:
       tags:
-        - Authentication
+        - General
       summary: User logout
       responses:
         "200":
@@ -144,19 +164,20 @@ paths:
           required: true
           schema:
             type: string
+            example: "d4e5f6g7h8i9j0k1l2m3n4o5p6q7r"
       responses:
         "200":
           description: User profile successfully retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/user_public_profile_response"
+                $ref: "#/components/schemas/UserPublicProfileResponse"
         "404":
           description: User not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/non_existent_user_response"
+                $ref: "#/components/schemas/NonExistentUserResponse"
   /get-profile-settings:
     get:
       tags:
@@ -168,67 +189,73 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  first_name:
-                    type: string
-                    example: "Mohammad"
-                  middle_name:
-                    type: string
-                    example: "Sadat"
-                  last_name:
-                    type: string
-                    example: "Hossain"
-                  user_name:
-                    type: string
-                    example: "Sadat999"
-                  phone_number:
-                    type: string
-                    example: "01700000000"
-                  email:
-                    type: string
-                    format: email
-                    example: "sadatho2014@gmail.com"
-                  profile_picture:
-                    type: string
-                    format: url
-                    example: "https://source.unsplash.com/400x300/?work"
+                allOf:
+                  - $ref: "#/components/schemas/UserProfileSettings"
+                example:
+                  user_id: "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p"
+                  first_name: "Mohammad"
+                  middle_name: "Sadat"
+                  last_name: "Hossain"
+                  user_name: "Sadat999"
+                  password: "f1A2s3D4"
+                  phone_number: "01723456789"
+                  email_address: "sadatdbt@gmail.com"
+                  profile_picture: "https://unsplash.com/photos/a-long-exposure-photo-of-a-mountain-road-l2scWsGyq_U"
+                  bio: "In this world, there are two types of people. Those who procrastinate, and those who don't."
         "500":
           description: Internal Server Error
   /update-profile-settings:
     put:
       tags:
         - User Profile
-      summary: Update profile settings of the authenticated user
+      summary: Update profile settings of the authenticated user (except profile picture)
       requestBody:
         description: User profile settings
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                first_name:
-                  type: string
-                  example: "Mohammad"
-                middle_name:
-                  type: string
-                  example: "Sadat"
-                last_name:
-                  type: string
-                  example: "Hossain"
-                user_name:
-                  type: string
-                  example: "Sadat999"
-                phone_number:
-                  type: string
-                  example: "01700000000"
-                email:
-                  type: string
-                  format: email
-                  example: "abc@gmail.com"
+              allOf:
+                - $ref: "#/components/schemas/UserProfileSettings"
+              example:
+                user_id: "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p"
+                first_name: "Mohammad"
+                middle_name: "Sadat"
+                last_name: "Hossain"
+                user_name: "Sadat999"
+                password: "f1A2s3D423vL#*1"
+                phone_number: "01875123456"
+                email_address: "buetcse19@gmail.com"
+                bio: "Hello there! Welcome to my profile"
       responses:
         "200":
           description: Profile settings successfully updated
+        "400":
+          description: Bad request - Invalid input
+        "500":
+          description: Internal Server Error
+  /update-profile-picture:
+    put:
+      tags:
+        - User Profile
+      summary: Update profile picture of the authenticated user
+      requestBody:
+        description: User profile picture
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                  format: string
+                  example: "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p"
+                profile_picture:
+                  type: object
+                  format: binary
+                  description: Image file to be uploaded
+      responses:
+        "200":
+          description: Profile picture successfully updated
         "400":
           description: Bad request - Invalid input
         "500":
@@ -254,32 +281,9 @@ paths:
                     example: https://taskflow-express-api.vercel.app/
         "500":
           description: Internal Server Error
-  /update-profile-picture:
-    put:
-      tags:
-        - User Profile
-      summary: Update profile picture of the authenticated user
-      requestBody:
-        description: User profile picture
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                profile_picture:
-                  type: string
-                  format: url
-                  example: "https://source.unsplash.com/400x300/?work"
-      responses:
-        "200":
-          description: Profile picture successfully updated
-        "400":
-          description: Bad request - Invalid input
-        "500":
-          description: Internal Server Error
   /get-boards:
     get:
-      summary: Get all boards of the authenticated user for the own dashboard page
+      summary: Get all boards of the authenticated user for the dashboard page
       tags:
         - Board
       responses:
@@ -290,115 +294,130 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    board_id:
-                      type: string
-                    board_name:
-                      type: string
-                    created_at:
-                      type: string
-                      format: date-time
-                    board_owner:
-                      type: string
-                    board_progress:
-                      type: number
-                      format: float
+                  $ref: "#/components/schemas/BoardSummarizedForm"
                 example:
-                  - board_id: "1"
-                    board_name: "Project 1"
-                    created_at: "2021-08-01T00:00:00.000Z"
+                  - board_id: 1
+                    board_name: "CSE408 Software Project | TaskFlow"
+                    board_description: "This board oversees the progress of the CSE408 Software Project"
+                    created_at: "2023-10-05T00:00:00.000Z"
+                    board_deadline: "2024-01-31T00:00:00.000Z"
                     board_owner: "Sadat999"
-                    board_progress: 0.3
-                  - board_id: "2"
-                    board_name: "Project 2"
-                    created_at: "2021-08-01T00:00:00.000Z"
-                    board_owner: "BRAINIAC77"
-                    board_progress: 0.8
+                    board_overall_progress: 0.45
+                  - board_id: 2
+                    board_name: "CSE406 Security Project | Wazuh"
+                    board_description: "This board oversees the progress of the CSE406 Security Project"
+                    created_at: "2023-11-05T00:00:00.000Z"
+                    board_deadline: "2024-01-31T00:00:00.000Z"
+                    board_owner: "risenfromashes"
+                    board_overall_progress: 0.12
+                  - board_id: 3
+                    board_name: "Thesis | Language Model of Phylogenetic Trees"
+                    board_description: "Tune here to be in sync with the progress of our thesis work"
+                    created_at: "2023-10-23T00:00:00.000Z"
+                    board_deadline: "2024-01-31T00:00:00.000Z"
+                    board_owner: "Sadat999"
+                    board_overall_progress: 0.09
         "500":
           description: Internal Server Error
-  /get-board-details/{board-id}:
+  /get-board-content/{board-id}:
     get:
-      summary: Get details of a board for the board view page
+      summary: Get lists and tasks of a board for the board view page
       tags:
         - Board
       parameters:
         - name: board-id
           in: path
-          description: ID of the board whose details are to be retrieved
+          description: ID of the board whose content is to be retrieved
           required: true
           schema:
-            type: string
+            type: integer
+            example: 3
       responses:
         "200":
-          description: Board details successfully retrieved
+          description: Board content successfully retrieved
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  board_id:
-                    type: string
-                    example: "1"
-                  board_name:
-                    type: string
-                    example: "Project 1"
-                  board_description:
-                    type: string
-                    example: "This is a sample project"
-                  created_at:
-                    type: string
-                    format: date-time
-                    example: "2021-08-01T00:00:00.000Z"
-                  board_owner:
-                    type: string
-                    example: "Sadat999"
-                  board_progress:
-                    type: number
-                    format: float
-                    example: 0.5
+                allOf:
+                  - $ref: "#/components/schemas/BoardContent"
+                example:
+                  board_id: 1
+                  board_name: "CSE408 Software Project | TaskFlow"
                   board_lists:
-                    type: array
-                    description: Lists within the board
-                    items:
-                      type: object
-                      properties:
-                        list_id:
-                          type: string
-                        list_name:
-                          type: string
-                        list_tasks:
-                          type: array
-                          description: Tasks within the list
-                          items:
-                            type: object
-                            properties:
-                              task_id:
-                                type: string
-                              task_name:
-                                type: string
-                              task_deadline:
-                                type: string
-                                format: date-time
-                    example:
-                      - list_id: "1"
-                        list_name: "To Do"
-                        list_tasks:
-                          - task_id: "1"
-                            task_name: "Task 1"
-                            task_deadline: "2023-08-05T00:00:00.000Z"
-                          - task_id: "2"
-                            task_name: "Task 2"
-                            task_deadline: "2023-08-05T00:00:00.000Z"
-                      - list_id: "2"
-                        list_name: "Doing"
-                        list_tasks:
-                          - task_id: "3"
-                            task_name: "Task 3"
-                            task_deadline: "2023-08-05T00:00:00.000Z"
-                          - task_id: "4"
-                            task_name: "Task 4"
-                            task_deadline: "2023-08-05T00:00:00.000Z"
+                    - list_id: 1
+                      list_name: "Project Scope Presentation"
+                      list_tasks:
+                        - task_id: 1
+                          task_name: "Research to find a suitable project"
+                          task_deadline: "2023-10-05T00:00:00.000Z"
+                          task_label_color: "#FF0000"
+                          task_overall_progress: 1.00
+                        - task_id: 2
+                          task_name: "Do a meeting for project finalization"
+                          task_deadline: "2023-10-06T00:00:00.000Z"
+                          task_label_color: "#123456"
+                          task_overall_progress: 1.00
+                        - task_id: 3
+                          task_name: "Prepare the presentation slides"
+                          task_deadline: "2023-10-08T00:00:00.000Z"
+                          task_label_color: "#652921"
+                          task_overall_progress: 1.00
+                    - list_id: 2
+                      list_name: "Mock UI Design"
+                      list_tasks:
+                        - task_id: 4
+                          task_name: "Sketch the design in a meeting"
+                          task_deadline: "2023-10-10T00:00:00.000Z"
+                          task_label_color: "#F2A541"
+                          task_overall_progress: 1.00
+                        - task_id: 5
+                          task_name: "Design the home page"
+                          task_deadline: "2023-10-17T00:00:00.000Z"
+                          task_label_color: "#F23A41"
+                          task_overall_progress: 1.00
+                        - task_id: 6
+                          task_name: "Design the profile settings page"
+                          task_deadline: "2023-10-17T00:00:00.000Z"
+                          task_label_color: "#F2F541"
+                          task_overall_progress: 1.00
+                        - task_id: 7
+                          task_name: "Design the board view page"
+                          task_deadline: "2023-10-17T00:00:00.000Z"
+                          task_label_color: "#F2F541"
+                          task_overall_progress: 1.00
+                        - task_id: 8
+                          task_name: "Design the task view page"
+                          task_deadline: "2023-10-17T00:00:00.000Z"
+                          task_label_color: "#F2F541"
+                          task_overall_progress: 1.00
+                        - task_id: 9
+                          task_name: "Design the task creation page"
+                          task_deadline: "2023-10-17T00:00:00.000Z"
+                          task_label_color: "#F2F541"
+                          task_overall_progress: 1.00
+                        - task_id: 10
+                          task_name: "Finalize the design on Figma"
+                          task_deadline: "2023-10-17T00:00:00.000Z"
+                          task_label_color: "#A3F541"
+                          task_overall_progress: 1.00
+                    - list_id: 3
+                      list_name: "API & Architecture Presentation"
+                      list_tasks:
+                        - task_id: 11
+                          task_name: "Plan the APIs"
+                          task_deadline: "2023-10-27T00:00:00.000Z"
+                          task_label_color: "#F23A41"
+                          task_overall_progress: 1.00
+                        - task_id: 12
+                          task_name: "Design the architecture"
+                          task_deadline: "2023-10-27T00:00:00.000Z"
+                          task_label_color: "#123456"
+                          task_overall_progress: 0.21
+                        - task_id: 13
+                          task_name: "Document on SwaggerHub"
+                          task_deadline: "2023-10-27T00:00:00.000Z"
+                          task_label_color: "#652921"
+                          task_overall_progress: 0.64
         "401":
           description: Unauthorized - User is not a member of the board
         "404":
@@ -406,12 +425,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/non_existent_board_response"
+                $ref: "#/components/schemas/NonExistentBoardResponse"
         "500":
           description: Internal Server Error
   /get-board-settings/{board-id}:
     get:
-      summary: Get settings of a board (including the member list) for the board settings page
+      summary: Get settings of a board (including the member list)
       tags:
         - Board
       parameters:
@@ -420,56 +439,38 @@ paths:
           description: ID of the board whose settings are to be retrieved
           required: true
           schema:
-            type: string
+            type: integer
+            example: 3
       responses:
         "200":
           description: Board settings successfully retrieved
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  board_id:
-                    type: string
-                    example: "1"
-                  board_name:
-                    type: string
-                    example: "Project 1"
-                  board_description:
-                    type: string
-                    example: "This is a sample project"
-                  board_owner:
-                    type: string
-                    example: "Sadat999"
+                allOf:
+                  - $ref: "#/components/schemas/BoardSettings"
+                example:
+                  board_id: 2
+                  board_name: "CSE406 Security Project | Wazuh"
+                  board_description: "This board oversees the progress of the CSE406 Security Project"
+                  board_owner: "risenfromashes"
+                  board_deadline: "2024-01-31T00:00:00.000Z"
                   board_members:
-                    type: array
-                    description: Members of the board
-                    items:
-                      type: object
-                      properties:
-                        user_id:
-                          type: string
-                        user_name:
-                          type: string
-                        full_name:
-                          type: string
-                        profile_picture:
-                          type: string
-                          format: url
-                        member_role:
-                          type: string
-                          description: "1 - Owner, 2 - Admin, 3 - Member"
-                    example:
-                      - user_id: "1"
-                        user_name: "Sadat999"
-                        full_name: "Mohammad Sadat Hossain"
-                        profile_picture: "https://source.unsplash.com/400x300/?work"
-                        member_role: "1"
-                      - user_id: "2"
-                        user_name: "BRAINIAC77"
-                        full_name: "Asif Azad"
-                        profile_picture: "https://source.unsplash.com/400x300/?work"
-                        member_role: "2"
+                    - user_id: "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p"
+                      user_name: "Sadat999"
+                      full_name: "Mohammad Sadat Hossain"
+                      profile_picture: "https://unsplash.com/photos/a-long-exposure-photo-of-a-mountain-road-l2scWsGyq_U"
+                      member_role: 2
+                    - user_id: "b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q"
+                      user_name: "risenfromashes"
+                      full_name: "Ashrafur Rahman Khan"
+                      profile_picture: "https://unsplash.com/photos/a-view-of-a-mountain-range-in-the-desert-t3dlLOhdEzs"
+                      member_role: 1
+                    - user_id: "c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r"
+                      user_name: "BRAINIAC77"
+                      full_name: "Asif Azad"
+                      profile_picture: "https://unsplash.com/photos/a-person-standing-on-a-beach-with-a-surfboard-RI5FdLjKAXU"
+                      member_role: 2
         "401":
           description: Unauthorized - User is not an admin of the board
         "404":
@@ -477,7 +478,45 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/non_existent_board_response"
+                $ref: "#/components/schemas/NonExistentBoardResponse"
+        "500":
+          description: Internal Server Error
+  /update-board-settings/{board-id}:
+    put:
+      summary: Update settings of a board, ownership transfer is through different API
+      tags:
+        - Board
+      parameters:
+        - name: board-id
+          in: path
+          description: ID of the board whose settings are to be updated
+          required: true
+          schema:
+            type: integer
+            example: 3
+      requestBody:
+        description: Board settings
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/BoardSettings"
+              example:
+                board_id: 2
+                board_name: "Wazuh Research Project"
+                board_description: "This board is created for coordination of the Wazuh research project"
+                board_deadline: "2024-02-28T00:00:00.000Z"
+      responses:
+        "200":
+          description: Board settings successfully updated
+        "401":
+          description: Unauthorized - User is not an admin of the board
+        "404":
+          description: Board not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonExistentBoardResponse"
         "500":
           description: Internal Server Error
   /add-member/{board-id}/{user-id}:
@@ -491,13 +530,15 @@ paths:
           description: ID of the board to which the member is to be added
           required: true
           schema:
-            type: string
+            type: integer
+            example: 3
         - name: user-id
           in: path
           description: ID of the user to be added as a member
           required: true
           schema:
             type: string
+            example: "c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r"
       responses:
         "200":
           description: Member successfully added
@@ -520,7 +561,7 @@ paths:
           description: Internal Server Error
   /remove-member/{board-id}/{user-id}:
     delete:
-      summary: Remove a member from a board
+      summary: Remove a member from a board, possible for only the owner of the board
       tags:
         - Board
       parameters:
@@ -529,18 +570,20 @@ paths:
           description: ID of the board from which the member is to be removed
           required: true
           schema:
-            type: string
+            type: integer
+            example: 2
         - name: user-id
           in: path
           description: ID of the user to be removed as a member
           required: true
           schema:
             type: string
+            example: "b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q"
       responses:
         "200":
           description: Member successfully removed
         "401":
-          description: Unauthorized - User is not an admin of the board
+          description: Unauthorized - User is not the owner of the board
         "404":
           description: Board or user not found
           content:
@@ -556,9 +599,9 @@ paths:
                     example: The specified board ID or user ID does not exist
         "500":
           description: Internal Server Error
-  /update-member-access/{user-id}:
+  /update-board-access/{user-id}:
     put:
-      summary: Update access of a member of a board
+      summary: Update access of a member of a board, possible for only the owner of the board
       tags:
         - Board
       parameters:
@@ -568,72 +611,36 @@ paths:
           required: true
           schema:
             type: string
+            example: "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p"
       requestBody:
-        description: Member access
+        description: Update access of a board for a member
         content:
           application/json:
             schema:
               type: object
               properties:
                 member_role:
-                  type: string
-                  example: "1"
+                  type: integer
+                  example: 2
                   description: "1 - Owner, 2 - Admin, 3 - Member"
       responses:
         "200":
           description: Member access successfully updated
         "401":
-          description: Unauthorized - User is not an admin of the board
+          description: Unauthorized - User is not the owner of the board
         "404":
-          description: User not found
+          description: User not a member of the board
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/non_existent_user_response"
-        "500":
-          description: Internal Server Error
-  /update-board-settings/{board-id}:
-    put:
-      summary: Update settings of a board (name, description or ownership transfer)
-      tags:
-        - Board
-      parameters:
-        - name: board-id
-          in: path
-          description: ID of the board whose settings are to be updated
-          required: true
-          schema:
-            type: string
-      requestBody:
-        description: Board settings
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                board-id:
-                  type: string
-                  example: "1"
-                board_name:
-                  type: string
-                  example: "Project 1"
-                board_description:
-                  type: string
-                  example: "This is a sample project"
-                board_owner:
-                  type: string
-                  example: "Sadat999"
-      responses:
-        "200":
-          description: Board settings successfully updated
-        "401":
-          description: Unauthorized - User is not an admin of the board
-        "404":
-          description: Board not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/non_existent_board_response"
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: User is not a member of the board
+                  message:
+                    type: string
+                    example: The specified user is not a member of the board
         "500":
           description: Internal Server Error
   /create-board:
@@ -646,34 +653,40 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                board_name:
-                  type: string
-                  example: "Project 1"
-                board_description:
-                  type: string
-                  example: "This is a sample project"
+              allOf:
+                - $ref: "#/components/schemas/BoardSettings"
+              example:
+                board_name: "ISD Project | ExploreMate"
+                board_description: "This board is created for coordination of the ISD project"
+                board_deadline: "2023-12-05T00:00:00.000Z"
                 board_members:
-                  type: array
-                  description: Members of the board
-                  items:
-                    type: object
-                    properties:
-                      user_id:
-                        type: string
-                      user_name:
-                        type: string
-                      member_role:
-                        type: string
-                        description: "1 - Owner, 2 - Admin, 3 - Member"
-                  example:
-                    - user_id: "1"
-                      user_name: "Sadat999"
-                      member_role: "1"
-                    - user_id: "2"
-                      user_name: "BRAINIAC77"
-                      member_role: "2"
+                  - user_id: "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p"
+                    user_name: "Sadat999"
+                    full_name: "Mohammad Sadat Hossain"
+                    profile_picture: "https://unsplash.com/photos/a-long-exposure-photo-of-a-mountain-road-l2scWsGyq_U"
+                    member_role: 1
+                  - user_id: "c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r"
+                    user_name: "BRAINIAC77"
+                    full_name: "Asif Azad"
+                    profile_picture: "https://unsplash.com/photos/a-person-standing-on-a-beach-with-a-surfboard-RI5FdLjKAXU"
+                    member_role: 2
+                  - user_id: "d4e5f6g7h8i9j0k1l2m3n4o5p6q7r"
+                    user_name: "shattik420"
+                    full_name: "Shattik Islam Rhythm"
+                    profile_picture: "https://unsplash.com/photos/a-view-of-a-mountain-range-in-the-desert-t3dlLOhdEzs"
+                    member_role: 2
+                  - user_id: "e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t"
+                    user_name: "Tahmid-404"
+                    full_name: "Nafis Tahmid"
+                    profile_picture: "https://unsplash.com/photos/an-aerial-view-of-a-desert-with-rocks-and-sand-4q87Z96NBYg"
+                  - user_id: "f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u"
+                    user_name: "shitdroid"
+                    full_name: "Wasif Hamid"
+                    profile_picture: "https://unsplash.com/photos/a-couple-of-lounge-chairs-sitting-next-to-a-swimming-pool-7XMl6DyEyGk"
+                  - user_id: "g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v"
+                    user_name: "amirulislamalif"
+                    full_name: Amirul Islam Alif
+                    profile_picture: "https://unsplash.com/photos/a-person-looking-out-from-a-cave-in-the-desert-9bE0LlCrX2M"
       responses:
         "200":
           description: Board successfully created
@@ -683,22 +696,22 @@ paths:
                 type: object
                 properties:
                   board_id:
-                    type: string
-                    example: "1"
+                    type: integer
+                    example: 5
                   board_name:
                     type: string
-                    example: "Project 1"
+                    example: "ISD Project | ExploreMate"
                   created_at:
                     type: string
                     format: date-time
-                    example: "2021-08-01T00:00:00.000Z"
+                    example: "2023-08-23T00:00:00.000Z"
         "400":
           description: Bad request - Invalid input
         "500":
           description: Internal Server Error
   /delete-board/{board-id}:
     delete:
-      summary: Delete a board
+      summary: Delete a board, only possible for the owner of the board
       tags:
         - Board
       parameters:
@@ -707,7 +720,8 @@ paths:
           description: ID of the board to be deleted
           required: true
           schema:
-            type: string
+            type: integer
+            example: 3
       responses:
         "200":
           description: Board successfully deleted
@@ -718,64 +732,88 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/non_existent_board_response"
+                $ref: "#/components/schemas/NonExistentBoardResponse"
         "500":
           description: Internal Server Error
-  /get-task-lists/{board-id}:
+  /get-lists/{board-id}:
     get:
-      summary: Get all task lists of a board along with their minimal detail
+      summary: Get all lists of a board along with minimal detail
       tags:
-        - Task List
+        - List
       parameters:
         - name: board-id
           in: path
-          description: ID of the board whose task lists are to be retrieved
+          description: ID of the board whose lists are to be retrieved
           required: true
           schema:
-            type: string
+            type: integer
+            example: 3
       responses:
         "200":
-          description: Task lists successfully retrieved
+          description: Lists successfully retrieved
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    list_id:
-                      type: string
-                    list_name:
-                      type: string
+                  allOf:
+                    - $ref: "#/components/schemas/ListSummarizedForm"
                   example:
-                    - list_id: "1"
-                      list_name: "To Do"
-                    - list_id: "2"
-                      list_name: "Doing"
+                    - list_id: 7
+                      list_name: "Project Scope Presentation"
+                      list_description: "The first week's assignment"
+                      list_deadline: "2023-08-05T00:00:00.000Z"
+                      list_overall_progress: 1.00
+                    - list_id: 8
+                      list_name: "BPMN Diagram"
+                      list_description: "The second week's assignment"
+                      list_deadline: "2023-08-19T00:00:00.000Z"
+                      list_overall_progress: 1.00
+                    - list_id: 9
+                      list_name: "Mock UI Design"
+                      list_description: "The third week's assignment"
+                      list_deadline: "2023-09-03T00:00:00.000Z"
+                      list_overall_progress: 1.00
+                    - list_id: 10
+                      list_name: "ERD & Class Diagram"
+                      list_description: "The fourth week's assignment"
+                      list_deadline: "2023-09-17T00:00:00.000Z"
+                      list_overall_progress: 1.00
+                    - list_id: 11
+                      list_name: "Collaboration, Sequence & State Diagram"
+                      list_description: "The fifth week's assignment"
+                      list_deadline: "2023-09-30T00:00:00.000Z"
+                      list_overall_progress: 1.00
+                    - list_id: 12
+                      list_name: "Partial Software Demonstration"
+                      list_description: "The sixth week's assignment"
+                      list_deadline: "2023-10-20T00:00:00.000Z"
+                      list_overall_progress: 0.33
         "401":
-          description: Unauthorized - User is not a member of the board
+          description: Unauthorized - User does not have view access to the list
         "404":
           description: Board not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/non_existent_board_response"
+                $ref: "#/components/schemas/NonExistentBoardResponse"
         "500":
           description: Internal Server Error
-  /add-task-list/{board-id}:
+  /add-list/{board-id}:
     post:
-      summary: Add a task list to a board
+      summary: Add a list to a board
       tags:
-        - Task List
+        - List
       parameters:
         - name: board-id
           in: path
-          description: ID of the board to which the task list is to be added
+          description: ID of the board to which the list is to be added
           required: true
           schema:
-            type: string
+            type: integer
+            example: 4
       requestBody:
-        description: Task list details
+        description: List details
         content:
           application/json:
             schema:
@@ -783,74 +821,151 @@ paths:
               properties:
                 list_name:
                   type: string
-                  example: "To Do"
+                  example: "API & Architecture Presentation"
+                list_description:
+                  type: string
+                  example: "This presentation will be required to finalize the APIs of TaskFlow"
+                list_deadline:
+                  type: string
+                  example: "2024-01-23T00:00:00.000Z"
       responses:
         "200":
-          description: Task list successfully added
+          description: List successfully added to board
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   list_id:
-                    type: string
-                    example: "1"
+                    type: integer
+                    example: 12
                   list_name:
                     type: string
-                    example: "To Do"
+                    example: "API & Architecture Presentation"
         "401":
-          description: Unauthorized - User is not a member of the board
+          description: Unauthorized - User does not have edit access to the board
         "404":
           description: Board not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/non_existent_board_response"
-        "500":
-          description: Internal Server Error
-  /delete-task-list/{list-id}:
-    delete:
-      summary: Delete a task list from a board
-      tags:
-        - Task List
-      parameters:
-        - name: list-id
-          in: path
-          description: ID of the task list to be deleted
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Task list successfully deleted
-        "401":
-          description: Unauthorized - User does not have admin access to the list
-        "404":
-          description: Task list not found
+                $ref: "#/components/schemas/NonExistentBoardResponse"
+        "409":
+          description: Conflicting Input
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/non_existent_list_reponse"
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid Input
+                  message:
+                    type: string
+                    example: List deadline cannot be further than board deadline
         "500":
           description: Internal Server Error
-  /update-task-list-access/{list-id}/{member-id}:
-    put:
-      summary: Update access of a member of a task list
+  /delete-list/{list-id}:
+    delete:
+      summary: Delete a list from a board
       tags:
-        - Task List
+        - List
       parameters:
         - name: list-id
           in: path
-          description: ID of the task list whose member access is to be updated
+          description: ID of the list to be deleted
           required: true
           schema:
-            type: string
+            type: integer
+            example: 8
+      responses:
+        "200":
+          description: List successfully deleted
+        "401":
+          description: Unauthorized - User does not have edit access to the list
+        "404":
+          description: List not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonExistentListResponse"
+        "500":
+          description: Internal Server Error
+  /get-list-content/{list-id}:
+    get:
+      summary: Get the content of a list
+      tags:
+        - List
+      parameters:
+        - name: list-id
+          in: path
+          description: ID of the list whose content is to be retrieved
+          required: true
+          schema:
+            type: integer
+            example: 8
+      responses:
+        "200":
+          description: List content successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ListStructure"
+                example:
+                  list_id: 8
+                  list_name: "Mock UI Design"
+                  list_tasks:
+                    - task_id: 4
+                      task_name: "Sketch the design in a meeting"
+                      task_deadline: "2023-10-10T00:00:00.000Z"
+                      task_label_color: "#F2A541"
+                      task_overall_progress: 1.00
+                    - task_id: 5
+                      task_name: "Design the home page"
+                      task_deadline: "2023-10-12T00:00:00.000Z"
+                      task_label_color: "#F23A41"
+                      task_overall_progress: 1.00
+                    - task_id: 6
+                      task_name: "Design the profile settings page"
+                      task_deadline: "2023-10-14T00:00:00.000Z"
+                      task_label_color: "#F2F541"
+                      task_overall_progress: 1.00
+                    - task_id: 7
+                      task_name: "Design the board view page"
+                      task_deadline: "2023-10-15T00:00:00.000Z"
+                      task_label_color: "#F2F541"
+                      task_overall_progress: 1.00
+        "401":
+          description: Unauthorized - User does not have view access to the list
+        "404":
+          description: List not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonExistentListResponse"
+        "500":
+          description: Internal Server Error
+  /update-list-access/{list-id}/{member-id}:
+    put:
+      summary: Update access of a user in a list
+      tags:
+        - List
+      parameters:
+        - name: list-id
+          in: path
+          description: ID of the list whose member access is to be updated
+          required: true
+          schema:
+            type: integer
+            example: 8
         - name: member-id
           in: path
-          description: ID of the member whose access is to be updated
+          description: Member ID of the user whose access is to be updated
           required: true
           schema:
-            type: string
+            type: integer
+            example: 12
       requestBody:
         description: Member access
         content:
@@ -859,8 +974,8 @@ paths:
               type: object
               properties:
                 member_role:
-                  type: string
-                  example: "1"
+                  type: integer
+                  example: 2
                   description: "1 - Owner, 2 - Admin, 3 - Member"
       responses:
         "200":
@@ -882,18 +997,133 @@ paths:
                     example: The specified user ID or task list ID does not exist
         "500":
           description: Internal Server Error
-  /get-tasks/{task-list-id}:
+  /get-list-settings/{list-id}:
     get:
-      summary: Get all tasks of a task list along with their minimal detail
+      summary: Get settings of a list
+      tags:
+        - List
+      parameters:
+        - name: list-id
+          in: path
+          description: ID of the list whose settings are to be retrieved
+          required: true
+          schema:
+            type: integer
+            example: 8
+      responses:
+        "200":
+          description: List settings successfully retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ListSettings"
+                example:
+                  list_id: 8
+                  list_name: "Mock UI Design"
+                  list_description: "The second week's assignment"
+                  list_deadline: "2023-10-17T00:00:00.000Z"
+                  list_members:
+                    - user_id: "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p"
+                      user_name: "Sadat999"
+                      full_name: "Mohammad Sadat Hossain"
+                      profile_picture: "https://unsplash.com/photos/a-long-exposure-photo-of-a-mountain-road-l2scWsGyq_U"
+                      member_role: 1
+                    - user_id: "c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r"
+                      user_name: "BRAINIAC77"
+                      full_name: "Asif Azad"
+                      profile_picture: "https://unsplash.com/photos/a-person-standing-on-a-beach-with-a-surfboard-RI5FdLjKAXU"
+                      member_role: 2
+                    - user_id: "d4e5f6g7h8i9j0k1l2m3n4o5p6q7r"
+                      user_name: "shattik420"
+                      full_name: "Shattik Islam Rhythm"
+                      profile_picture: "https://unsplash.com/photos/a-view-of-a-mountain-range-in-the-desert-t3dlLOhdEzs"
+                      member_role: 2
+                    - user_id: "e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t"
+                      user_name: "Tahmid-404"
+                      full_name: "Nafis Tahmid"
+                      profile_picture: "https://unsplash.com/photos/an-aerial-view-of-a-desert-with-rocks-and-sand-4q87Z96NBYg"
+                    - user_id: "f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u"
+                      user_name: "shitdroid"
+                      full_name: "Wasif Hamid"
+                      profile_picture: "https://unsplash.com/photos/a-couple-of-lounge-chairs-sitting-next-to-a-swimming-pool-7XMl6DyEyGk"
+                    - user_id: "g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v"
+                      user_name: "amirulislamalif"
+                      full_name: Amirul Islam Alif
+                      profile_picture: "https://unsplash.com/photos/a-person-looking-out-from-a-cave-in-the-desert-9bE0LlCrX2M"
+        "401":
+          description: Unauthorized - User does not have admin access to the list
+        "404":
+          description: List not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonExistentListResponse"
+        "500":
+          description: Internal Server Error
+  /update-list-settings/{list-id}:
+    put:
+      summary: Update settings of a list
+      tags:
+        - List
+      parameters:
+        - name: list-id
+          in: path
+          description: ID of the list whose settings are to be updated
+          required: true
+          schema:
+            type: integer
+            example: 8
+      requestBody:
+        description: List settings
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ListSettings"
+              example:
+                list_name: "Mock UI Design"
+                list_description: "The second week's assignment"
+                list_deadline: "2023-10-17T00:00:00.000Z"
+      responses:
+        "200":
+          description: List settings successfully updated
+        "401":
+          description: Unauthorized - User does not have edit access to the list
+        "404":
+          description: List not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonExistentListResponse"
+        "409":
+          description: Conflicting Input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid Input
+                  message:
+                    type: string
+                    example: List deadline cannot be further than board deadline
+        "500":
+          description: Internal Server Error
+  /get-tasks/{list-id}:
+    get:
+      summary: Get all tasks of a list along with their minimal detail
       tags:
         - Task
       parameters:
-        - name: task-list-id
+        - name: list-id
           in: path
           description: ID of the task list whose tasks are to be retrieved
           required: true
           schema:
-            type: string
+            type: integer
+            example: 8
       responses:
         "200":
           description: Tasks successfully retrieved
@@ -902,15 +1132,32 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/task_shortened_form"
+                  allOf:
+                    - $ref: "#/components/schemas/TaskSummarizedForm"
+                example:
+                  - task_id: 4
+                    task_name: "Implement the dashboard page"
+                    task_deadline: "2024-01-23T00:00:00.000Z"
+                    task_label_color: "#F2A541"
+                    task_overall_progress: 0.85
+                  - task_id: 5
+                    task_name: "Implement the profile settings page"
+                    task_deadline: "2024-01-28T00:00:00.000Z"
+                    task_label_color: "#F23A41"
+                    task_overall_progress: 0.86
+                  - task_id: 6
+                    task_name: "Implement the notifications feature"
+                    task_deadline: "2024-02-02T00:00:00.000Z"
+                    task_label_color: "#F2F541"
+                    task_overall_progress: 1.00
         "401":
-          description: Unauthorized - User is not a member of the task list
+          description: Unauthorized - User does not have view access to the list
         "404":
-          description: Task list not found
+          description: List not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/non_existent_list_reponse"
+                $ref: "#/components/schemas/NonExistentListResponse"
         "500":
           description: Internal Server Error
   /get-task-detail/{task-id}:
@@ -924,23 +1171,63 @@ paths:
           description: ID of the task whose details are to be retrieved
           required: true
           schema:
-            type: string
+            type: integer
+            example: 23
       responses:
         "200":
           description: Task details successfully retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/task_detailed_form"
+                allOf:
+                  - $ref: "#/components/schemas/TaskDetail"
+                example:
+                  task_id: 12
+                  task_name: "Implement the dashboard page"
+                  task_description: "This is the page the user will see after logging in"
+                  task_cover_photo: "https://unsplash.com/photos/a-couple-of-people-that-are-standing-in-the-grass--V_jGnufxTQ"
+                  task_label_color: "#F2A541"
+                  task_start_time: "2024-01-10T00:00:00.000Z"
+                  task_deadline: "2024-01-23T00:00:00.000Z"
+                  task_labels:
+                    - label_id: 1
+                      label_name: "new-feature"
+                    - label_id: 2
+                      label_name: "first-development"
+                    - label_id: 3
+                      label_name: "urgent"
+                  task_assignees:
+                    - user_id: "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p"
+                      user_name: "Sadat999"
+                      profile_picture: "https://unsplash.com/photos/a-long-exposure-photo-of-a-mountain-road-l2scWsGyq_U"
+                    - user_id: "c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r"
+                      user_name: "amirulislamalif"
+                      profile_picture: "https://unsplash.com/photos/a-person-looking-out-from-a-cave-in-the-desert-9bE0LlCrX2M"
+                  task_checklist_items:
+                    - item_id: 11
+                      item_name: "Implement the top card"
+                      item_status: false
+                    - item_id: 12
+                      item_name: "Implement the drawer"
+                      item_status: true
+                    - item_id: 13
+                      item_name: "Add the navigation bar"
+                      item_status: true
+                    - item_id: 14
+                      item_name: "Add responsiveness"
+                      item_status: false
+                    - item_id: 15
+                      item_name: "Add animations"
+                      item_status: false
 
         "401":
-          description: Unauthorized - User is not assigned for this task
+          description: Unauthorized - User does not have view access to the task
         "404":
           description: Task not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/non_existent_task_response"
+                $ref: "#/components/schemas/NonExistentTaskResponse"
         "500":
           description: Internal Server Error
   /get-all-labels:
@@ -956,20 +1243,22 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    label_id:
-                      type: string
-                    label_name:
-                      type: string
+                  allOf:
+                    - $ref: "#/components/schemas/TaskLabel"
                   example:
-                    - label_id: "1"
+                    - label_id: 1
+                      label_name: "new-feature"
+                    - label_id: 2
+                      label_name: "first-development"
+                    - label_id: 3
+                      label_name: "urgent"
+                    - label_id: 4
                       label_name: "bugfix"
-                    - label_id: "2"
+                    - label_id: 5
                       label_name: "feature-release"
-                    - label_id: "3"
+                    - label_id: 6
                       label_name: "documentation"
-                    - label_id: "4"
+                    - label_id: 7
                       label_name: "enhancement"
         "500":
           description: Internal Server Error
@@ -984,7 +1273,8 @@ paths:
           description: ID of the task to which the label is to be added
           required: true
           schema:
-            type: string
+            type: integer
+            example: 32
       requestBody:
         description: Label details
         content:
@@ -1011,6 +1301,17 @@ paths:
                     example: "bugfix"
         "400":
           description: Bad request - Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid Input
+                  message:
+                    type: string
+                    example: Label with this name already exists
         "401":
           description: Unauthorized - User does not have edit access to the task
         "404":
@@ -1018,7 +1319,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/non_existent_task_response"
+                $ref: "#/components/schemas/NonExistentTaskResponse"
         "500":
           description: Internal Server Error
   /update-task-detail/{task-id}:
@@ -1069,7 +1370,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/non_existent_task_response"
+                $ref: "#/components/schemas/NonExistentTaskResponse"
         "500":
           description: Internal Server Error
   /update-cover-photo/{task-id}:
@@ -1107,7 +1408,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/non_existent_task_response"
+                $ref: "#/components/schemas/NonExistentTaskResponse"
         "500":
           description: Internal Server Error
   /get-messages/{task-id}:
@@ -1189,7 +1490,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/non_existent_task_response"
+                $ref: "#/components/schemas/NonExistentTaskResponse"
         "500":
           description: Internal Server Error
   /send-message/{task-id}:
@@ -1245,7 +1546,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/non_existent_task_response"
+                $ref: "#/components/schemas/NonExistentTaskResponse"
         "500":
           description: Internal Server Error
   /get-sorted-tasks:
@@ -1470,101 +1771,274 @@ paths:
 
 components:
   schemas:
-    registration_body:
+    RegistrationInformation:
       type: object
       properties:
         first_name:
           type: string
-          example: "Mohammad"
+          example: "Asif"
         middle_name:
           type: string
-          example: "Sadat"
+          example: ""
         last_name:
           type: string
-          example: "Hossain"
+          example: "Azad"
         user_name:
           type: string
-          example: "Sadat999"
-        email:
+          example: "BRAINIAC77"
+        email_address:
           type: string
           format: email
-          example: "sadatho2014@gmail.com"
+          example: "brainiac2677@gmail.com"
         phone_number:
           type: string
           example: "01712345678"
         password:
           type: string
           format: password
-          example: "123456"
+          example: "78LqSa6dFA9"
           description: Password will be hashed before sending to the server
-    login_body:
-      type: object
-      properties:
-        user_name:
-          type: string
-          example: "Sadat999"
-        password:
-          type: string
-          format: password
-          example: "123456"
-          description: Password will be hashed before sending to the server
-    user_public_profile_response:
+    UserPublicProfileResponse:
       type: object
       properties:
         user_id:
           type: string
-          example: "1"
+          example: "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p"
         full_name:
           type: string
-          example: "Sadat Hossain"
+          example: "Mohammad Sadat Hossain"
         user_name:
           type: string
           example: "Sadat999"
-        email:
+        email_address:
           type: string
           format: email
           example: "sadatho2014@gmail.com"
         phone_number:
           type: string
-          example: "01700000000"
+          example: "01732145678"
         profile_picture:
           type: string
           format: url
-          example: "https://source.unsplash.com/400x300/?work"
+          example: "https://unsplash.com/photos/a-man-sitting-on-a-rock-in-the-desert-ud9NlvvEzUI"
+        bio:
+          type: string
+          example: "I am a software engineer"
         task_completion_rate:
           type: number
           format: float
-          example: 0.5
-        n_tasks_completed:
+          description: Percentage of tasks completed out of all tasks assigned to the user
+          example: 0.75
+        task_completion_count:
           type: integer
           example: 5
         longest_streak:
           type: integer
-          example: 10
-        public_boards:
+          description: Longest streak of consecutive days with at least one task completed
+          example: 13
+    UserProfileSettings:
+      type: object
+      properties:
+        user_id:
+          type: string
+        first_name:
+          type: string
+        middle_name:
+          type: string
+        last_name:
+          type: string
+        user_name:
+          type: string
+        password:
+          type: string
+        phone_number:
+          type: string
+        email_address:
+          type: string
+          format: email
+        bio:
+          type: string
+    MemberMinimalRepresentation:
+      type: object
+      properties:
+        user_id:
+          type: string
+        user_name:
+          type: string
+        full_name:
+          type: string
+        profile_picture:
+          type: string
+          format: url
+        member_role:
+          type: integer
+          description: "1 - Owner, 2 - Admin, 3 - Member"
+    ListSummarizedForm:
+      type: object
+      properties:
+        list_id:
+          type: integer
+        list_name:
+          type: string
+        list_description:
+          type: string
+        list_deadline:
+          type: string
+          format: date-time
+        list_overall_progress:
+          type: number
+          format: float
+          # description: Percentage of tasks completed out of all tasks in the list
+    ListSettings:
+      type: object
+      properties:
+        list_id:
+          type: integer
+        list_name:
+          type: string
+        list_description:
+          type: string
+        list_deadline:
+          type: string
+          format: date-time
+        list_members:
+          $ref: "#/components/schemas/MemberMinimalRepresentation"
+    BoardSummarizedForm:
+      type: object
+      properties:
+        board_id:
+          type: integer
+        board_name:
+          type: string
+        board_description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        board_deadline:
+          type: string
+          format: date-time
+        board_owner:
+          type: string
+          description: User name of the board owner
+        board_overall_progress:
+          type: number
+          format: float
+          description: Percentage of tasks completed out of all tasks in the board
+    BoardSettings:
+      type: object
+      properties:
+        board_id:
+          type: integer
+        board_name:
+          type: string
+        board_description:
+          type: string
+        board_owner:
+          type: string
+          description: User name of the board owner
+        board_deadline:
+          type: string
+          format: date-time
+        board_members:
+          $ref: "#/components/schemas/MemberMinimalRepresentation"
+    BoardContent:
+      type: object
+      properties:
+        board_id:
+          type: integer
+        board_name:
+          type: string
+        board_lists:
           type: array
-          description: List of public boards the user is a part of
           items:
-            type: object
-            properties:
-              board_id:
-                type: string
-              board_name:
-                type: string
-              board_description:
-                type: string
-              board_owner:
-                type: string
-            example:
-              - board_id: "1"
-                board_name: "Project 1"
-                board_description: "This is a sample project"
-                board_owner: "Sadat999"
-              - board_id: "2"
-                board_name: "Project 2"
-                board_description: "This is another sample project"
-                board_owner: "Sadat999"
-    non_existent_user_response:
+            $ref: "#/components/schemas/ListStructure"
+    ListStructure:
+      type: object
+      properties:
+        list_id:
+          type: integer
+        list_name:
+          type: string
+        list_tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskSummarizedForm"
+    TaskSummarizedForm:
+      type: object
+      properties:
+        task_id:
+          type: integer
+        task_name:
+          type: string
+        task_deadline:
+          type: string
+          format: date-time
+        task_label_color:
+          type: string
+        task_overall_progress:
+          type: number
+          format: float
+          # description: Percentage of checklist items completed out of all checklist items in the task
+    TaskLabel:
+      type: object
+      properties:
+        label_id:
+          type: integer
+        label_name:
+          type: string
+    TaskAssignee:
+      type: object
+      properties:
+        user_id:
+          type: string
+        user_name:
+          type: string
+        profile_picture:
+          type: string
+          format: url
+    ChecklistItem:
+      type: object
+      properties:
+        item_id:
+          type: integer
+        item_name:
+          type: string
+        item_status:
+          type: boolean
+    TaskDetail:
+      type: object
+      properties:
+        task_id:
+          type: integer
+        task_name:
+          type: string
+        task_description:
+          type: string
+        task_cover_photo:
+          type: string
+          format: url
+        task_label_color:
+          type: string
+        task_start_time:
+          type: string
+          format: date-time
+        task_deadline:
+          type: string
+          format: date-time
+        task_labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskLabel"
+        task_assignees:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskAssignee"
+        task_checklist_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChecklistItem"
+    NonExistentUserResponse:
       type: object
       properties:
         error:
@@ -1573,7 +2047,7 @@ components:
         message:
           type: string
           example: The specified user ID does not exist
-    non_existent_board_response:
+    NonExistentBoardResponse:
       type: object
       properties:
         error:
@@ -1582,7 +2056,7 @@ components:
         message:
           type: string
           example: The specified board ID does not exist
-    non_existent_list_reponse:
+    NonExistentListResponse:
       type: object
       properties:
         error:
@@ -1591,7 +2065,7 @@ components:
         message:
           type: string
           example: The specified task list ID does not exist
-    non_existent_task_response:
+    NonExistentTaskResponse:
       type: object
       properties:
         error:
@@ -1600,100 +2074,3 @@ components:
         message:
           type: string
           example: The specified task ID does not exist
-    task_shortened_form:
-      type: object
-      properties:
-        task_id:
-          type: string
-          example: "1"
-        task_name:
-          type: string
-          example: "Read the documentation"
-        task_label_color:
-          type: string
-          example: "#FF0000"
-        task_deadline:
-          type: string
-          format: date-time
-          example: "2023-08-05T00:00:00.000Z"
-    task_detailed_form:
-      type: object
-      properties:
-        task_id:
-          type: string
-          example: "1"
-        task_name:
-          type: string
-          example: "Task 1"
-        task_description:
-          type: string
-          example: "This is a sample task"
-        task_cover_photo:
-          type: string
-          format: url
-          example: "https://source.unsplash.com/400x300/?work"
-        task_label_color:
-          type: string
-          example: "#FF0000"
-        task_start_time:
-          type: string
-          format: date-time
-          example: "2023-08-05T00:00:00.000Z"
-        task_deadline:
-          type: string
-          format: date-time
-          example: "2023-08-05T00:00:00.000Z"
-        task_labels:
-          type: array
-          description: Labels of the task
-          items:
-            type: object
-            properties:
-              label_id:
-                type: string
-              label_name:
-                type: string
-          example:
-            - label_id: "1"
-              label_name: "bugfix"
-            - label_id: "2"
-              label_name: "feature-release"
-        task_assignees:
-          type: array
-          description: Assignees of the task
-          items:
-            type: object
-            properties:
-              user_id:
-                type: string
-              user_name:
-                type: string
-              profile_picture:
-                type: string
-                format: url
-          example:
-            - user_id: "1"
-              user_name: "Sadat999"
-              profile_picture: "https://source.unsplash.com/400x300/?work"
-            - user_id: "2"
-              user_name: "BRAINIAC77"
-              profile_picture: "https://source.unsplash.com/400x300/?work"
-        task_checklist_items:
-          type: array
-          description: Checklist items of the task
-          items:
-            type: object
-            properties:
-              item_id:
-                type: string
-              item_name:
-                type: string
-              item_status:
-                type: boolean
-          example:
-            - item_id: "1"
-              item_name: "Write the code"
-              item_status: true
-            - item_id: "2"
-              item_name: "Read the documentation"
-              item_status: false
