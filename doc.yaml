@@ -53,6 +53,123 @@ servers:
     url: https://taskflow-express-api.vercel.app/
 
 paths:
+  /task_completion:
+    post:
+      tags:
+        - OpenAI API
+      summary: Perform task completion using Chat Completion API
+      description: |
+        This endpoint allows you to use OpenAI's chat completion API to generate responses for a given task.
+      requestBody:
+        description: Request body for task completion
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                      content:
+                        type: string
+              required:
+                - messages
+              example:
+                messages:
+                  - role: "system"
+                    content: "You are helping to complete the task. The already completed part of the task will be given as context to you."
+                  - role: "user"
+                    content: "This is the documentation for our cse-408 software project."
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              example:
+                id: YOUR_UNIQUE_REQUEST_ID
+                object: chat.completion
+                created: 1677649421
+                model: gpt-3.5-turbo-0613
+                choices:
+                  index: 0
+                  message:
+                    role: "assistant"
+                    content: "Project Overview:\nThe CSE-408 Software Project aims to develop a computer science education platform that will help students learn computer science concepts and improve their programming skills. The platform will provide interactive lessons, coding challenges, and a community for students to connect and collaborate.\n\nFeatures:\n1. Interactive Lessons: The platform will offer a wide range of interactive lessons that cover various computer science topics, including programming languages, algorithms, data structures, and software development methodologies. The lessons will include interactive examples, quizzes, and coding exercises to engage the students.\n\n2. Coding Challenges: To enhance students' programming skills, the platform will provide coding challenges of varying difficulty levels. Students can solve these challenges in the programming language of their choice and receive instant feedback on their solutions. The challenges will cover topics like problem-solving, algorithm design, and implementation.\n\n3. Community Platform: The project will include a community platform where students can connect with each other, ask questions, and share resources. The platform will feature discussion forums, chat rooms"
+                  inish_reason: "stop"
+                  logprobs: null
+                usage:
+                  prompt_tokens: 47
+                  completion_tokens: 645
+                  total_tokens: 692
+                system_fingerprint: null
+  /task_chat:
+    post:
+      tags:
+        - OpenAI API
+      summary: This is the AI chatbot for a particular task
+      description: |
+        This endpoint allows you to use OpenAI's chat completion API to chat with the AI chatbot for a particular task.
+      requestBody:
+        description: Request body for task chatbot
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                      content:
+                        type: string
+              required:
+                - messages
+              example:
+                messages:
+                  - role: "user"
+                    content: "This is the task of developing home page of taskflow."
+                  - role: "assistant"
+                    content: "If you need assistance with designing or documenting the API for the home page of TaskFlow, I can assist."
+                  - role: "user"
+                    content: "Yes, I need assistance with designing the API for the home page of TaskFlow. What sections should be in the page?"
+                  - role: "assistant"
+                    content: "The home page of TaskFlow should have the following sections: 1. Header, 2. Navigation Bar, 3. Main Content, 4. Footer."
+                  - role: "user"
+                    content: "What should be in the header section?"
+
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              example:
+                id: YOUR_UNIQUE_REQUEST_ID
+                object: chat.completion
+                created: 1677649421
+                model: gpt-3.5-turbo-0613
+                choices:
+                  index: 0
+                  message:
+                    role: "assistant"
+                    content: "The header section should have the TaskFlow logo, the name of the user, and the logout button."
+
+                  inish_reason: "stop"
+                  logprobs: null
+                usage:
+                  prompt_tokens: 47
+                  completion_tokens: 645
+                  total_tokens: 692
+                system_fingerprint: null
+
   /login:
     post:
       tags:
