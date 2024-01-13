@@ -129,6 +129,19 @@ paths:
                     example: https://taskflow-express-api.vercel.app/login
         "400":
           description: Bad request - invalid input
+        "409":
+          description: Conflict - user already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: User already exists
+                  message:
+                    type: string
+                    example: The specified username or email address is already in use
         "500":
           description: Internal Server Error
   /logout:
@@ -976,7 +989,7 @@ paths:
                 member_role:
                   type: integer
                   example: 2
-                  description: "1 - Owner, 2 - Admin, 3 - Member"
+                  description: "1 - Owner, 2 - Admin, 3 - Viewer"
       responses:
         "200":
           description: Member access successfully updated
@@ -1262,19 +1275,11 @@ paths:
                       label_name: "enhancement"
         "500":
           description: Internal Server Error
-  /add-label/{task-id}:
+  /add-label:
     post:
-      summary: Add a label to a task, and if this is a new label, add it to the application
+      summary: If user chooses to add a new label yet to be created, this operation adds the label to global database.
       tags:
         - Task
-      parameters:
-        - name: task-id
-          in: path
-          description: ID of the task to which the label is to be added
-          required: true
-          schema:
-            type: integer
-            example: 32
       requestBody:
         description: Label details
         content:
@@ -1287,18 +1292,15 @@ paths:
                   example: "leisure-activity"
       responses:
         "200":
-          description: Label successfully added
+          description: Label successfully added to application
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  label_id:
-                    type: string
-                    example: "1"
-                  label_name:
-                    type: string
-                    example: "bugfix"
+                allOf:
+                  - $ref: "#/components/schemas/TaskLabel"
+                example:
+                  label_id: 8
+                  label_name: "leisure-activity"
         "400":
           description: Bad request - Invalid input
           content:
@@ -1322,9 +1324,69 @@ paths:
                 $ref: "#/components/schemas/NonExistentTaskResponse"
         "500":
           description: Internal Server Error
+  /update-checklist/{task-id}:
+    put:
+      summary: Update checklist of a task (add, remove, update items).
+      description: item_id of any newly added item is null.
+      tags:
+        - Task
+      parameters:
+        - name: task-id
+          in: path
+          description: ID of the task whose checklist is to be updated
+          required: true
+          schema:
+            type: integer
+            example: 32
+      requestBody:
+        description: Checklist details
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                checklist_items:
+                  type: array
+                  items:
+                    allOf:
+                      - $ref: "#/components/schemas/ChecklistItem"
+                  example:
+                    - item_id: 11
+                      item_name: "Implement the top card"
+                      item_status: false
+                    - item_id: 12
+                      item_name: "Implement the drawer"
+                      item_status: true
+                    - item_id: 13
+                      item_name: "Add the navigation bar"
+                      item_status: true
+                    - item_id: 14
+                      item_name: "Add responsiveness"
+                      item_status: true
+                    - item_id: 15
+                      item_name: "Add animations"
+                      item_status: true
+                    - item_id: null
+                      item_name: "Newly added item"
+                      item_status: false
+      responses:
+        "200":
+          description: Checklist successfully updated
+        "400":
+          description: Bad request - Invalid input
+        "401":
+          description: Unauthorized - User does not have edit access to the task
+        "404":
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonExistentTaskResponse"
+        "500":
+          description: Internal Server Error
   /update-task-detail/{task-id}:
     put:
-      summary: Update details of a task (name, description, color, time)
+      summary: Update details of a task (name, description, color, time, label)
       tags:
         - Task
       parameters:
@@ -1333,31 +1395,31 @@ paths:
           description: ID of the task whose details are to be updated
           required: true
           schema:
-            type: string
+            type: integer
+            example: 32
       requestBody:
         description: Task details
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                task_name:
-                  type: string
-                  example: "Task 1"
-                task_description:
-                  type: string
-                  example: "This is the updated description"
-                task_label_color:
-                  type: string
-                  example: "#FF0000"
-                task_start_time:
-                  type: string
-                  format: date-time
-                  example: "2023-08-05T00:00:00.000Z"
-                task_deadline:
-                  type: string
-                  format: date-time
-                  example: "2023-08-05T00:00:00.000Z"
+              allOf:
+                - $ref: "#/components/schemas/TaskDetail"
+              example:
+                task_name: "Implement the dashboard page"
+                task_description: "This is the page the user will see after logging in"
+                task_cover_photo: "https://unsplash.com/photos/a-very-tall-building-with-a-neon-sign-on-its-side-UgYx9ciFoAI"
+                task_label_color: "#F2A541"
+                task_start_time: "2024-01-10T00:00:00.000Z"
+                task_deadline: "2024-02-23T00:00:00.000Z"
+                task_labels:
+                  - label_id: 1
+                    label_name: "new-feature"
+                  - label_id: 2
+                    label_name: "first-development"
+                  - label_id: 3
+                    label_name: "urgent"
+                  - label_id: 4
+                    label_name: "experimental"
       responses:
         "200":
           description: Task details successfully updated
@@ -1373,7 +1435,7 @@ paths:
                 $ref: "#/components/schemas/NonExistentTaskResponse"
         "500":
           description: Internal Server Error
-  /update-cover-photo/{task-id}:
+  /update-task-cover-photo/{task-id}:
     put:
       summary: Update cover photo of a task
       tags:
@@ -1384,7 +1446,8 @@ paths:
           description: ID of the task whose cover photo is to be updated
           required: true
           schema:
-            type: string
+            type: integer
+            example: 19
       requestBody:
         description: Task cover photo
         content:
@@ -1393,9 +1456,9 @@ paths:
               type: object
               properties:
                 task_cover_photo:
-                  type: string
-                  format: url
-                  example: "https://source.unsplash.com/400x300/?work"
+                  type: object
+                  format: binary
+                  description: The image file to be uploaded
       responses:
         "200":
           description: Task cover photo successfully updated
@@ -1411,9 +1474,60 @@ paths:
                 $ref: "#/components/schemas/NonExistentTaskResponse"
         "500":
           description: Internal Server Error
+  /update-task-access/{task-id}/{member-id}:
+    put:
+      summary: Update access of a user in a task
+      tags:
+        - Task
+      parameters:
+        - name: task-id
+          in: path
+          description: ID of the task whose member access is to be updated
+          required: true
+          schema:
+            type: integer
+            example: 33
+        - name: member-id
+          in: path
+          description: Member ID of the user whose access is to be updated
+          required: true
+          schema:
+            type: integer
+            example: 12
+      requestBody:
+        description: Member access
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                member_role:
+                  type: integer
+                  example: 2
+                  description: "1 - Owner, 2 - Assigned, 3 - Viewer"
+      responses:
+        "200":
+          description: Member access successfully updated
+        "401":
+          description: Unauthorized - User does not have admin access to the task
+        "404":
+          description: User or task not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: User or task not found
+                  message:
+                    type: string
+                    example: The specified user ID or task ID does not exist
+        "500":
+          description: Internal Server Error
   /get-messages/{task-id}:
     post:
-      summary: Get messages of a task, having fields for how many messages to retrieve
+      summary: Get messages of a task, including field for how many messages to retrieve
       tags:
         - Task
       parameters:
@@ -1422,7 +1536,8 @@ paths:
           description: ID of the task whose messages are to be retrieved
           required: true
           schema:
-            type: string
+            type: integer
+            example: 33
       requestBody:
         description: Message details
         content:
@@ -1432,7 +1547,8 @@ paths:
               properties:
                 n_messages:
                   type: integer
-                  example: 10
+                  default: 15
+                  example: 7
                 offset:
                   type: integer
                   example: 0
@@ -1445,42 +1561,50 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    message_id:
-                      type: string
-                    message_content:
-                      type: string
-                    message_sender:
-                      type: string
-                    message_time:
-                      type: string
-                      format: date-time
-                    message_attachment:
-                      type: string
-                      format: url
-                      description: URL of the attachment, can be null
-                example:
-                  - message_id: "1"
-                    message_content: "Hello"
-                    message_sender: "Sadat999"
-                    message_time: "2023-08-05T00:00:00.000Z"
-                    message_attachment: "https://source.unsplash.com/400x300/?work"
-                  - message_id: "2"
-                    message_content: "Hi"
-                    message_sender: "BRAINIAC77"
-                    message_time: "2023-08-05T00:00:00.000Z"
-                    message_attachment: null
-                  - message_id: "3"
-                    message_content: "How are you?"
-                    message_sender: "Sadat999"
-                    message_time: "2023-08-05T00:00:00.000Z"
-                    message_attachment: null
-                  - message_id: "4"
-                    message_content: "I am fine"
-                    message_sender: "BRAINIAC77"
-                    message_time: "2023-08-05T00:00:00.000Z"
-                    message_attachment: null
+                  allOf:
+                    - $ref: "#/components/schemas/TaskMessage"
+                  example:
+                    - message_id: 1
+                      message_sender: "Sadat999"
+                      message_sender_dp: "https://unsplash.com/photos/a-long-exposure-photo-of-a-mountain-road-l2scWsGyq_U"
+                      message_time: "2023-08-05T00:00:00.000Z"
+                      message_content: "Hello there, we are expected to write an essay on the topic of 'The Importance of Time Management'. Can you help me get started?"
+                      message_attachment: null
+                    - message_id: 2
+                      message_sender: "Copilot"
+                      message_sender_dp: "https://unsplash.com/photos/a-person-standing-on-a-beach-with-a-surfboard-RI5FdLjKAXU"
+                      message_time: "2023-08-05T00:01:00.000Z"
+                      message_content: "Sure, I can help you with that. I will send you a few links to get you started."
+                      message_attachment: null
+                    - message_id: 3
+                      message_sender: "Copilot"
+                      message_sender_dp: "https://unsplash.com/photos/a-person-standing-on-a-beach-with-a-surfboard-RI5FdLjKAXU"
+                      message_time: "2023-08-05T00:02:00.000Z"
+                      message_content: "Here is what I have collected so far:"
+                      message_attachment: "https://docs.google.com/document/d/1QdVDEpuk3wWCYST3jtu8mQl4KRp-WEFnbb5EdfWho9M/edit#heading=h.kv9b945ft277"
+                    - message_id: 4
+                      message_sender: "Sadat999"
+                      message_sender_dp: "https://unsplash.com/photos/a-long-exposure-photo-of-a-mountain-road-l2scWsGyq_U"
+                      message_time: "2023-08-05T00:03:00.000Z"
+                      message_content: "Thanks!"
+                      message_attachment: null
+                    - message_id: 5
+                      message_sender: "Copilot"
+                      message_sender_dp: "https://unsplash.com/photos/a-person-standing-on-a-beach-with-a-surfboard-RI5FdLjKAXU"
+                      message_time: "2023-08-07T00:04:00.000Z"
+                      message_content: "Hey long time no see! How is the essay going?"
+                      message_attachment: null
+                    - message_id: 6
+                      message_sender: "BRAINIAC77"
+                      message_sender_dp: "https://unsplash.com/photos/a-couple-of-lounge-chairs-sitting-next-to-a-swimming-pool-7XMl6DyEyGk"
+                      message_time: "2023-08-07T00:05:00.000Z"
+                      message_content: "The first part is done. I am tasked with the concluding phase, kind of stuck there. Can you help me?"
+                      message_attachment: "https://docs.google.com/document/d/1XZORNVNbQOewGd2vE7fdzuG4RDa7cxVcoVj5pld8p20/edit?usp=sharing"
+                    - message_id: 7
+                      message_sender: "Copilot"
+                      message_sender_dp: "https://unsplash.com/photos/a-person-standing-on-a-beach-with-a-surfboard-RI5FdLjKAXU"
+                      message_time: "2023-08-07T00:06:00.000Z"
+                      message_content: "Sure, I am taking a look at it right now."
         "400":
           description: Bad request - Invalid input
         "401":
@@ -1495,7 +1619,7 @@ paths:
           description: Internal Server Error
   /send-message/{task-id}:
     post:
-      summary: Send a message to a task
+      summary: Send a message on a task
       tags:
         - Task
       parameters:
@@ -1504,21 +1628,18 @@ paths:
           description: ID of the task to which the message is to be sent
           required: true
           schema:
-            type: string
+            type: integer
+            example: 35
       requestBody:
         description: Message details
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                message_content:
-                  type: string
-                  example: "Hello"
-                message_attachment:
-                  type: string
-                  format: url
-                  example: "https://source.unsplash.com/400x300/?work"
+              allOf:
+                - $ref: "#/components/schemas/TaskMessage"
+              example:
+                message_content: "Hello can you check this work?"
+                message_attachment: "https://upload.wikimedia.org/wikipedia/commons/6/64/Expressjs.png"
       responses:
         "200":
           description: Message successfully sent
@@ -1528,8 +1649,8 @@ paths:
                 type: object
                 properties:
                   message_id:
-                    type: string
-                    example: "1"
+                    type: integer
+                    example: 32
                   message_sender:
                     type: string
                     example: "Sadat999"
@@ -1540,7 +1661,126 @@ paths:
         "400":
           description: Bad request - Invalid input
         "401":
-          description: Unauthorized - User is not an assignee of this task
+          description: Unauthorized - User does not have messaging access on the task
+        "404":
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonExistentTaskResponse"
+        "500":
+          description: Internal Server Error
+  /get-comments/{task-id}:
+    post:
+      summary: Get comments of a task, including field for how many comments to retrieve
+      tags:
+        - Task
+      parameters:
+        - name: task-id
+          in: path
+          description: ID of the task whose comments are to be retrieved
+          required: true
+          schema:
+            type: integer
+            example: 33
+      requestBody:
+        description: Comment details
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                n_comments:
+                  type: integer
+                  default: 15
+                  example: 7
+                offset:
+                  type: integer
+                  example: 0
+                  description: The offset is from the latest comment
+      responses:
+        "200":
+          description: Comments successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: "#/components/schemas/TaskComment"
+                  example:
+                    - comment_id: 1
+                      comment_text: "Beautify the left sidebar"
+                      commenter_username: "risenfromashes"
+                      commenter_dp: "https://unsplash.com/photos/a-long-exposure-photo-of-a-mountain-road-l2scWsGyq_U"
+                      comment_time: "2023-08-05T00:00:00.000Z"
+                    - comment_id: 2
+                      comment_text: "Add responsiveness"
+                      commenter_username: "BRAINIAC77"
+                      commenter_dp: "https://unsplash.com/photos/a-couple-of-lounge-chairs-sitting-next-to-a-swimming-pool-7XMl6DyEyGk"
+                      comment_time: "2023-08-06T12:01:00.000Z"
+                    - comment_id: 3
+                      comment_text: "Nice modal!"
+                      commenter_username: "shattik420"
+                      commenter_dp: "https://unsplash.com/photos/a-view-of-a-mountain-range-in-the-desert-t3dlLOhdEzs"
+                      comment_time: "2023-08-09T12:02:00.000Z"
+        "400":
+          description: Bad request - Invalid input
+        "401":
+          description: Unauthorized - User is not a viewer of this task
+        "404":
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonExistentTaskResponse"
+        "500":
+          description: Internal Server Error
+  /add-comment/{task-id}:
+    post:
+      summary: Add a comment on a task
+      tags:
+        - Task
+      parameters:
+        - name: task-id
+          in: path
+          description: ID of the task to which the comment is to be added
+          required: true
+          schema:
+            type: integer
+            example: 35
+      requestBody:
+        description: Comment details
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment_text:
+                  type: string
+                  example: "I think it would be better if we use a different color for the sidebar"
+      responses:
+        "200":
+          description: Comment successfully added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comment_id:
+                    type: integer
+                    example: 32
+                  commenter_username:
+                    type: string
+                    example: "Sadat999"
+                  comment_time:
+                    type: string
+                    format: date-time
+                    example: "2023-08-05T00:00:00.000Z"
+        "400":
+          description: Bad request - Invalid input
+        "401":
+          description: Unauthorized - User does not have commenting access on the task
         "404":
           description: Task not found
           content:
@@ -1551,7 +1791,7 @@ paths:
           description: Internal Server Error
   /get-sorted-tasks:
     get:
-      summary: Get all tasks of the authenticated user sorted by ranking algorithm
+      summary: Get all pending tasks assigned to the authenticated user sorted by ranking algorithm
       tags:
         - Task
       responses:
@@ -1560,24 +1800,24 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    task_id:
-                      type: string
-                    task_name:
-                      type: string
-                    task_deadline:
-                      type: string
-                      format: date-time
+                allOf:
+                  - $ref: "#/components/schemas/TaskSummarizedForm"
                 example:
-                  - task_id: "1"
-                    task_name: "Task 1"
-                    task_deadline: "2023-08-05T00:00:00.000Z"
-                  - task_id: "2"
-                    task_name: "Task 2"
-                    task_deadline: "2023-08-05T00:00:00.000Z"
+                  - task_id: 33
+                    task_name: "Finalize the API documentation"
+                    task_deadline: "2024-01-14T00:00:00.000Z"
+                  - task_id: 16
+                    task_name: "Finish Rasterization Offline"
+                    task_deadline: "2024-01-23T00:00:00.000Z"
+                  - task_id: 19
+                    task_name: "Start Researching on Wazuh"
+                    task_deadline: "2024-01-30T00:00:00.000Z"
+                  - task_id: 12
+                    task_name: "Study for Security CT"
+                    task_deadline: "2024-01-16T00:00:00.000Z"
+                  - task_id: 18
+                    task_name: "Study divine economics"
+                    task_deadline: "2024-01-17T00:00:00.000Z"
         "500":
           description: Internal Server Error
   /get-unread-notifications:
@@ -1872,7 +2112,7 @@ components:
           format: url
         member_role:
           type: integer
-          description: "1 - Owner, 2 - Admin, 3 - Member"
+          description: "1 - Owner, 2 - Admin, 3 - Member/Viewer"
     ListSummarizedForm:
       type: object
       properties:
@@ -2038,6 +2278,44 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ChecklistItem"
+    TaskMessage:
+      type: object
+      properties:
+        message_id:
+          type: integer
+        message_text:
+          type: string
+        message_sender:
+          type: string
+          description: User name of the message sender
+        message_sender_dp:
+          type: string
+          format: url
+          description: URL of the message sender's profile picture
+        message_time:
+          type: string
+          format: date-time
+        message_attachment:
+          type: string
+          format: url
+          description: URL of the attachment, can be null
+    TaskComment:
+      type: object
+      properties:
+        comment_id:
+          type: integer
+        comment_text:
+          type: string
+        commenter_username:
+          type: string
+          description: User name of the comment sender
+        commenter_dp:
+          type: string
+          format: url
+          description: URL of the comment sender's profile picture
+        comment_time:
+          type: string
+          format: date-time
     NonExistentUserResponse:
       type: object
       properties:
