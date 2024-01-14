@@ -5,6 +5,9 @@ info:
     ## Overview
     TaskFlow is an innovative task manager assistant with an automated UI agent designed to streamline productivity and reduce procrastination, inspired from [CatAlyst: Domain-Extensible Intervention for Preventing Task Procrastination Using Large Generative Models](https://arxiv.org/abs/2302.05678). Through its intelligent features, TaskFlow helps users organize their life, providing a seamless interface for managing both personal and professional tasks.
 
+    <p align='center'><img src="https://i.ibb.co/fQr2Cbt/logo2.png" alt="taskflow" width="450"></p>
+
+
     ## Key Features
     1. **AI-Driven Task Management**: Integrates artificial intelligence to analyze task progress, and then offer further assistance to resume the task. This saves users from being stuck at a point in any task. The AI agent serves as an initiator, guiding users to overcome procrastination tendencies and manage tasks effectively.
     </br>
@@ -46,10 +49,16 @@ info:
     - **Database**: We selected [PostgresSQL](https://www.postgresql.org/) for its advanced features in handling complex queries and large datasets, ensuring data integrity and performance.
     <p align='center'><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Postgresql_elephant.svg/1024px-Postgresql_elephant.svg.png" alt="PostgreSQL" width="169" height="205"></p>
 
-    - **Architecture**: Our system will follow [Monolithic Architecture](https://en.wikipedia.org/wiki/Monolithic_architecture) as it is suitable for our current scope and complexity. It will provide sufficient scalability and maintainability without the overhead of distributed systems.
+    - **Architecture**: Our system will follow [client-server architecture](https://en.wikipedia.org/wiki/Client%E2%80%93server_model) as it is suitable for our current scope and complexity. It will provide sufficient scalability and maintainability without the overhead of distributed systems.
+      - Tight coupling and interdependence of components
       - Simplicity in development and deployment
       - Performance considerations
       - Project scale and complexity
+      <p align='center'><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Client-server-model.svg/1200px-Client-server-model.svg.png" alt="Client-Server Architecture" width="450"></p>
+
+
+    - **Workflow Diagram**:  
+      <p align='center'><img src="https://i.ibb.co/NYV5nBS/Screenshot-from-2024-01-14-14-23-34.png" alt="Workflow" width="700"></p>
 
     - **Deployment**: We intend to use [Vercel](https://vercel.com/) for frontend services and [Supabase](https://supabase.com/) for database and storage. 
       <p align='center'>
@@ -2923,8 +2932,3 @@ components:
         message:
           type: string
           example: You do not have admin access to this task
-# update profile pic req json to input form
-# get list settings
-# checklist in task detail
-# task cover photo
-# add notifications
