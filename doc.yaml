@@ -58,7 +58,7 @@ info:
 
 
     - **Workflow Diagram**:  
-      <p align='center'><img src="https://i.ibb.co/NYV5nBS/Screenshot-from-2024-01-14-14-23-34.png" alt="Workflow" width="700"></p>
+      <p align='center'><img src="https://i.ibb.co/93SjgST/flow-diagram.png" alt="Workflow" width="700"></p>
 
     - **Deployment**: We intend to use [Vercel](https://vercel.com/) for frontend services and [Supabase](https://supabase.com/) for database and storage. 
       <p align='center'>
