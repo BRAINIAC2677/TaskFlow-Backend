@@ -459,20 +459,17 @@ paths:
         - User Profile
       summary: Update profile picture of the authenticated user
       requestBody:
+        required: true
         description: User profile picture
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               properties:
-                user_id:
-                  type: string
-                  format: string
-                  example: "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p"
                 profile_picture:
-                  type: object
+                  type: string
                   format: binary
-                  description: Image file to be uploaded
+                  description: The binary image file to be uploaded
       responses:
         "200":
           description: Profile picture successfully updated
@@ -1708,16 +1705,17 @@ paths:
             type: integer
             example: 19
       requestBody:
+        required: true
         description: Task cover photo
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               properties:
                 task_cover_photo:
-                  type: object
+                  type: string
                   format: binary
-                  description: The image file to be uploaded
+                  description: The binary image file to be uploaded
       responses:
         "200":
           description: Task cover photo successfully updated
