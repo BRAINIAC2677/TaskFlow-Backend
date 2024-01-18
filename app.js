@@ -1,5 +1,5 @@
 import express from "express";
-import {json, urlencoded} from "express";
+import { json, urlencoded } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -24,9 +24,7 @@ app.use("/auth", auth_router);
 
 app.get("/", async (req, res) => {
   try {
-    const data = await db.any(
-      'SELECT * FROM "TaskBoards"'
-    );
+    const data = await db.any('SELECT * FROM "TaskBoard"');
     res.json(data);
   } catch (error) {
     console.error(error);
@@ -37,4 +35,3 @@ app.get("/", async (req, res) => {
 app.listen(port, () => {
   console.log(`Listening on port ${port}`);
 });
-
