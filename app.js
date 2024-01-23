@@ -22,15 +22,15 @@ app.use(
 
 app.use("/auth", auth_router);
 
-app.get("/", async (req, res) => {
-  try {
-    const data = await db.any('SELECT * FROM "TaskBoard"');
-    res.json(data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// app.get("/", async (req, res) => {
+//   try {
+//     const data = await db.any('SELECT * FROM "TaskBoard"');
+//     res.json(data);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
 app.listen(port, () => {
   console.log(`Listening on port ${port}`);
