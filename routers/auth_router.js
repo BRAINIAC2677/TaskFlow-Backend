@@ -18,7 +18,7 @@ function get_jwt(req) {
   return jwt;
 }
 
-async function get_user(req) {
+export async function get_user(req) {
   const jwt = get_jwt(req);
   if (!jwt) {
     return { data: null, error: "Unauthorized. No JWT provided." };

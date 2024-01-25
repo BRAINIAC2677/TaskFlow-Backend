@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 
 import db from "./db.js";
 import auth_router from "./routers/auth_router.js";
+import taskboard_router from "./routers/taskboard_router.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -21,16 +22,17 @@ app.use(
 );
 
 app.use("/auth", auth_router);
+app.use("/boards", taskboard_router);
 
-// app.get("/", async (req, res) => {
-//   try {
-//     const data = await db.any('SELECT * FROM "TaskBoard"');
-//     res.json(data);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   }
-// });
+app.get("/", async (req, res) => {
+  try {
+    const data = await db.any('SELECT * FROM "TaskBoard"');
+    res.json(data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 app.listen(port, () => {
   console.log(`Listening on port ${port}`);
