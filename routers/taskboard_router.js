@@ -10,6 +10,7 @@ dotenv.config();
 router.get("/get-all", async (req, res) => {
   const { data, error } = await get_user(req);
   if (error) {
+    console.error("Error: ", error);
     res.status(500).json({ error });
     return;
   }

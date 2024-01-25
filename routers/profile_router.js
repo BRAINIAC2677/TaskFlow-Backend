@@ -13,7 +13,9 @@ router.post("/get-usernames", async (req, res) => {
   const query = `
         SELECT
         id,
-        username
+        username,
+        first_name || ' ' || middle_name || ' ' || last_name AS full_name, 
+        dp_url
         FROM
             "UserProfile"
         WHERE
