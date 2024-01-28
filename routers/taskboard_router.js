@@ -23,6 +23,8 @@ router.get("/get-all", async (req, res) => {
     a.name AS board_name,
     a.due_timestamp,
     a.description,
+    random() * 101 AS progress,
+    'null' AS status,
     b.role,
     (
         SELECT
