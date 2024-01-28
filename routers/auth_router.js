@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import db from "../db.js";
 import supabase from "../supabase.js";
 
 const router = express.Router();
@@ -61,14 +62,37 @@ router.post("/signin", async (req, res) => {
   let password = req.body.password;
   console.log(email);
   console.log(password);
-  let { data, error } = await supabase.auth.signInWithPassword({
-    email: email,
-    password: password,
-  });
-  if (error) {
-    res.json(error);
-  } else {
-    res.json(data);
+
+  try {
+    let { data: signInData, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    });
+
+    if (error) {
+      res.status(500).json(error);
+      return;
+    }
+
+    const query = `
+      SELECT a.id, a.first_name, a.middle_name, a.last_name, b.email, a.username, a.dp_url
+      FROM "UserProfile" a, auth.users b
+      WHERE a.id = b.id and b.email = $1
+    `;
+
+    const userProfileData = await db.any(query, [email]);
+
+    // Combine signInData and userProfileData into a single object
+    const responseData = {
+      signInData,
+      userProfileData,
+    };
+
+    res.json(responseData);
+    console.log("Signed in successfully", responseData);
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
