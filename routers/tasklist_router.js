@@ -8,7 +8,7 @@ const router = express.Router();
 dotenv.config();
 
 router.post("/create/:board_id", async (req, res) => {
-  const { data, error } = await get_user(req);
+  const { error } = await get_user(req);
   if (error) {
     res.status(500).json({ error });
     return;

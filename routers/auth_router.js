@@ -35,12 +35,11 @@ router.post("/signup", async (req, res) => {
     email: email,
     password: password,
   });
-  console.log(response1);
   if (response1.error) {
     res.json(response1);
     return;
   }
-  console.log(username, first_name, middle_name, last_name);
+  console.log("Register request received");
   const response2 = await supabase
     .from("UserProfile")
     .insert([
@@ -53,15 +52,13 @@ router.post("/signup", async (req, res) => {
       },
     ])
     .select();
-  console.log(response2);
   res.json(response2);
 });
 
 router.post("/signin", async (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
-  console.log(email);
-  console.log(password);
+  console.log("Sign in request received", email, password);
 
   try {
     let { data: signInData, error } = await supabase.auth.signInWithPassword({
@@ -82,7 +79,6 @@ router.post("/signin", async (req, res) => {
 
     const userProfileData = await db.any(query, [email]);
 
-    // Combine signInData and userProfileData into a single object
     const responseData = {
       signInData,
       userProfileData,

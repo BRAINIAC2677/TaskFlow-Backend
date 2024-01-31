@@ -9,7 +9,6 @@ dotenv.config();
 
 router.post("/get-usernames", async (req, res) => {
   const { term, count } = req.body;
-  console.log(term, count);
   const query = `
         SELECT
         id,

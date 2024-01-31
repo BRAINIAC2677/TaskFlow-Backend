@@ -15,7 +15,6 @@ router.get("/get-all", async (req, res) => {
     return;
   }
   const user_id = data.user.id;
-  console.log("user_id", user_id);
 
   const query = `
     SELECT
@@ -64,7 +63,6 @@ router.post("/create", async (req, res) => {
     return;
   }
   const user_id = data.user.id;
-  console.log(req.body);
   const { board_name, board_deadline, board_description, board_members } =
     req.body;
 
@@ -115,8 +113,6 @@ router.get("/get-content/:board_id", async (req, res) => {
   }
   const user_id = data.user.id;
   const board_id = req.params.board_id;
-
-  console.log("user_id", user_id, "board_id", board_id);
 
   const query = `
   SELECT
