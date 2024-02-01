@@ -18,14 +18,14 @@ router.get("/get-all", async (req, res) => {
 
   const query = `
     SELECT
-    a.id AS board_id,
-    a.name AS board_name,
-    a.due_timestamp,
-    a.description,
-    random() * 101 AS progress,
-    'null' AS status,
-    b.role,
-    (
+      a.id AS board_id,
+      a.name AS board_name,
+      a.due_timestamp,
+      a.description,
+      random() * 101 AS progress,
+      'null' AS status,
+      b.role,
+      (
         SELECT
             JSON_BUILD_OBJECT('user_id', d.id, 'username', d.username) AS owner_info
         FROM
@@ -36,14 +36,13 @@ router.get("/get-all", async (req, res) => {
             AND c.board_id = a.id
         LIMIT
             1
-    ) AS owner_info
-  FROM
-    "TaskBoard" a
-    JOIN "TaskBoardMember" b ON a.id = b.board_id
-  WHERE
-    b.user_id = $1
-  ORDER BY
-    board_id;
+      ) AS owner_info
+    FROM
+      "TaskBoard" a JOIN "TaskBoardMember" b ON a.id = b.board_id
+    WHERE
+      b.user_id = $1
+    ORDER BY
+      board_id;
     `;
 
   try {
@@ -116,9 +115,9 @@ router.get("/get-content/:board_id", async (req, res) => {
 
   const query = `
   SELECT
-  tb.id AS board_id,
-  tb.name AS board_name,
-  json_agg(
+    tb.id AS board_id,
+    tb.name AS board_name,
+    json_agg(
       json_build_object(
           'list_id',
           tl.id,
@@ -126,29 +125,28 @@ router.get("/get-content/:board_id", async (req, res) => {
           tl.name,
           'list_tasks',
           (
-              SELECT
-                  json_agg(
-                      json_build_object(
-                          'task_id',
-                          t.id,
-                          'task_name',
-                          t.name,
-                          'task_deadline',
-                          t.due_timestamp,
-                          'task_label_color',
-                          t.label_color
-                      )
-                  )
-              FROM
-                  "Task" t
-              WHERE
-                  t.list_id = tl.id
+            SELECT
+              json_agg(
+                json_build_object(
+                  'task_id',
+                  t.id,
+                  'task_name',
+                  t.name,
+                  'task_deadline',
+                  t.due_timestamp,
+                  'task_label_color',
+                  t.label_color
+                )
+              )
+            FROM
+              "Task" t
+            WHERE
+              t.list_id = tl.id
           )
-          )
+        )
       ) AS board_lists
     FROM
-      "TaskBoard" tb
-      JOIN "TaskList" tl ON tl.board_id = tb.id
+      "TaskBoard" tb JOIN "TaskList" tl ON tl.board_id = tb.id
     WHERE
       tb.id = $1
     GROUP BY

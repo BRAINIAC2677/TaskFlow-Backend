@@ -11,10 +11,10 @@ router.post("/get-usernames", async (req, res) => {
   const { term, count } = req.body;
   const query = `
         SELECT
-        id,
-        username,
-        first_name || ' ' || middle_name || ' ' || last_name AS full_name, 
-        dp_url
+          id,
+          username,
+          first_name || ' ' || middle_name || ' ' || last_name AS full_name, 
+          dp_url
         FROM
             "UserProfile"
         WHERE

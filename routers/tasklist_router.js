@@ -17,10 +17,10 @@ router.post("/create/:board_id", async (req, res) => {
   const { list_name, list_description, list_deadline } = req.body;
 
   const query = `
-        INSERT INTO "TaskList" (board_id, name, description, due_timestamp)
-        VALUES ($1, $2, $3, $4)
-        RETURNING id;
-    `;
+    INSERT INTO "TaskList" (board_id, name, description, due_timestamp)
+    VALUES ($1, $2, $3, $4)
+    RETURNING id;
+  `;
 
   try {
     const data = await db.one(query, [
