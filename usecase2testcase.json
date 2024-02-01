@@ -1,0 +1,575 @@
+[
+  {
+    "usecase": {
+      "name": "Get All User Boards",
+      "scenario": "User retrieves a list of all their boards for display on the dashboard page.",
+      "actors": "User",
+      "preconditions": "User is registered, logged in, and has created or is a member of one or more boards.",
+      "steps": [
+        "User requests to view all boards",
+        "System retrieves and displays all boards associated with the user"
+      ]
+    },
+    "testcases": [
+      {
+        "name": "Successful Retrieval of Boards",
+        "description": "Verify that a user can successfully retrieve all boards they are associated with.",
+        "input": {},
+        "expected": {
+          "outcome": "Boards retrieval successful",
+          "status": "Retrieved",
+          "response": [
+            {
+              "board_id": 1,
+              "board_name": "CSE408 Software Project | TaskFlow",
+              "board_description": "This board oversees the progress of the CSE408 Software Project",
+              "created_at": "2023-10-05T00:00:00.000Z",
+              "board_deadline": "2024-01-31T00:00:00.000Z",
+              "board_owner": "Sadat999",
+              "board_overall_progress": 0.45
+            },
+            {
+              "board_id": 2,
+              "board_name": "CSE406 Security Project | Wazuh",
+              "board_description": "This board oversees the progress of the CSE406 Security Project",
+              "created_at": "2023-11-05T00:00:00.000Z",
+              "board_deadline": "2024-01-31T00:00:00.000Z",
+              "board_owner": "risenfromashes",
+              "board_overall_progress": 0.12
+            },
+            {
+              "board_id": 3,
+              "board_name": "Thesis | Language Model of Phylogenetic Trees",
+              "board_description": "Tune here to be in sync with the progress of our thesis work",
+              "created_at": "2023-10-23T00:00:00.000Z",
+              "board_deadline": "2024-01-31T00:00:00.000Z",
+              "board_owner": "Sadat999",
+              "board_overall_progress": 0.09
+            }
+          ]
+        }
+      },
+      {
+        "name": "Internal Server Error During Boards Retrieval",
+        "description": "Verify that the system provides an appropriate response in case of an internal server error during board retrieval.",
+        "input": {},
+        "expected": {
+          "outcome": "Boards retrieval failed",
+          "status": "Error",
+          "error": "Internal Server Error"
+        }
+      },
+      {
+        "name": "No Boards Available",
+        "description": "Verify that the system handles cases where the user has no boards associated with their account.",
+        "input": {},
+        "expected": {
+          "outcome": "No boards to retrieve",
+          "status": "No Content",
+          "response": []
+        }
+      }
+    ]
+  },
+  {
+    "usecase": {
+      "name": "Create a New Board",
+      "scenario": "User creates a new task board with specific details such as board name, description, deadline, and members.",
+      "actors": "User",
+      "preconditions": "User is registered and logged in.",
+      "steps": [
+        "User provides board details including name, description, deadline, and members.",
+        "User submits the request to create a new board."
+      ]
+    },
+    "testcases": [
+      {
+        "name": "Valid Board Creation",
+        "description": "Verify that a user can create a new board with all required and valid details.",
+        "input": {
+          "board_name": "ISD Project | ExploreMate",
+          "board_description": "This board is created for coordination of the ISD project",
+          "board_deadline": "2024-12-05T00:00:00.000Z",
+          "board_members": [
+            {
+              "user_id": "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p",
+              "user_name": "Sadat999",
+              "member_role": 1
+            },
+            {
+              "user_id": "c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r",
+              "user_name": "BRAINIAC77",
+              "member_role": 2
+            },
+            {
+              "user_id": "d4e5f6g7h8i9j0k1l2m3n4o5p6q7r",
+              "user_name": "shattik420",
+              "member_role": 2
+            },
+            {
+              "user_id": "e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t",
+              "user_name": "Tahmid-404"
+            },
+            {
+              "user_id": "f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u",
+              "user_name": "shitdroid"
+            },
+            {
+              "user_id": "g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v",
+              "user_name": "amirulislamalif"
+            }
+          ]
+        },
+        "expected": {
+          "outcome": "Board creation successful",
+          "status": "Created",
+          "response": {
+            "board_id": 5,
+            "board_name": "ISD Project | ExploreMate",
+            "created_at": "2024-08-23T00:00:00.000Z"
+          }
+        }
+      },
+      {
+        "name": "Invalid Board Creation - Missing Details",
+        "description": "Verify that the system handles cases where a user tries to create a board with missing details such as board name or members.",
+        "input": {
+          "board_description": "Missing board name and members",
+          "board_deadline": "2024-12-05T00:00:00.000Z"
+        },
+        "expected": {
+          "outcome": "Board creation failed",
+          "status": "Rejected",
+          "error": "Bad request - Invalid input"
+        }
+      },
+      {
+        "name": "Invalid Board Creation - Invalid Deadline",
+        "description": "Verify that the system handles cases where a user tries to create a board with an invalid deadline format.",
+        "input": {
+          "board_name": "ISD Project | ExploreMate",
+          "board_description": "This board is created for coordination of the ISD project",
+          "board_deadline": "invalid-date-format",
+          "board_members": [
+            {
+              "user_id": "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p",
+              "user_name": "Sadat999",
+              "member_role": 1
+            }
+          ]
+        },
+        "expected": {
+          "outcome": "Board creation failed",
+          "status": "Rejected",
+          "error": "Bad request - Invalid input"
+        }
+      },
+      {
+        "name": "Invalid Board Creation - Past Deadline",
+        "description": "Verify that the system prevents board creation with a deadline that is in the past.",
+        "input": {
+          "board_name": "ISD Project | ExploreMate",
+          "board_description": "This board is created for coordination of the ISD project",
+          "board_deadline": "2022-01-01T00:00:00.000Z",
+          "board_members": [
+            {
+              "user_id": "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p",
+              "user_name": "Sadat999",
+              "member_role": 1
+            }
+          ]
+        },
+        "expected": {
+          "outcome": "Board creation failed",
+          "status": "Rejected",
+          "error": "Bad request - Invalid input"
+        }
+      },
+      {
+        "name": "Server Error During Board Creation",
+        "description": "Verify that the system provides an appropriate response in case of an internal server error during board creation.",
+        "input": {
+          "board_name": "ISD Project | ExploreMate",
+          "board_description": "This board is created for coordination of the ISD project",
+          "board_deadline": "2023-12-05T00:00:00.000Z",
+          "board_members": [
+            {
+              "user_id": "af3b4c5d6e7f8g9h0i1j2k3l4m5n6o7p",
+              "user_name": "Sadat999",
+              "member_role": 1
+            }
+          ]
+        },
+        "expected": {
+          "outcome": "Board creation failed",
+          "status": "Rejected",
+          "error": "Internal Server Error"
+        }
+      }
+    ]
+  },
+  {
+    "usecase": {
+      "name": "Get Board Content",
+      "scenario": "User retrieves the content of a specific board, including lists and tasks for the board view page.",
+      "actors": "User",
+      "preconditions": "User is registered, logged in, and has access to the specified board.",
+      "steps": [
+        "User selects a board by its ID",
+        "System retrieves and displays all lists and tasks associated with the board"
+      ]
+    },
+    "testcases": [
+      {
+        "name": "Successful Retrieval of Board Content",
+        "description": "Verify that a user can successfully retrieve all content of a board they have access to.",
+        "input": {
+          "board_id": 1
+        },
+        "expected": {
+          "outcome": "Board content retrieval successful",
+          "status": "Retrieved",
+          "response": {
+            "board_id": 1,
+            "board_name": "CSE408 Software Project | TaskFlow",
+            "board_lists": [
+              {
+                "list_id": 1,
+                "list_name": "Project Scope Presentation",
+                "list_tasks": [
+                  {
+                    "task_id": 1,
+                    "task_name": "Research to find a suitable project",
+                    "task_deadline": "2023-10-05T00:00:00.000Z",
+                    "task_label_color": "#FF0000",
+                    "task_overall_progress": 1.0
+                  },
+                  {
+                    "task_id": 2,
+                    "task_name": "Do a meeting for project finalization",
+                    "task_deadline": "2023-10-06T00:00:00.000Z",
+                    "task_label_color": "#123456",
+                    "task_overall_progress": 1.0
+                  },
+                  {
+                    "task_id": 3,
+                    "task_name": "Prepare the presentation slides",
+                    "task_deadline": "2023-10-08T00:00:00.000Z",
+                    "task_label_color": "#654321",
+                    "task_overall_progress": 1.0
+                  }
+                ]
+              },
+              {
+                "list_id": 2,
+                "list_name": "Mock UI Design",
+                "list_tasks": [
+                  {
+                    "task_id": 4,
+                    "task_name": "Sketch the design in a meeting",
+                    "task_deadline": "2023-10-10T00:00:00.000Z",
+                    "task_label_color": "#F2A541",
+                    "task_overall_progress": 1.0
+                  },
+                  {
+                    "task_id": 5,
+                    "task_name": "Design the home page",
+                    "task_deadline": "2023-10-10T00:00:00.000Z",
+                    "task_label_color": "#F23A41",
+                    "task_overall_progress": 1.0
+                  },
+                  {
+                    "task_id": 6,
+                    "task_name": "Design the profile settings page",
+                    "task_deadline": "2023-10-17T00:00:00.000Z",
+                    "task_label_color": "#F2F541",
+                    "task_overall_progress": 1.0
+                  },
+                  {
+                    "task_id": 7,
+                    "task_name": "Design the board view page",
+                    "task_deadline": "2023-10-17T00:00:00.000Z",
+                    "task_label_color": "#41F2F5",
+                    "task_overall_progress": 1.0
+                  },
+                  {
+                    "task_id": 8,
+                    "task_name": "Design the task view page",
+                    "task_deadline": "2023-10-17T00:00:00.000Z",
+                    "task_label_color": "#41F2A5",
+                    "task_overall_progress": 1.0
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "Unauthorized Board Content Access",
+        "description": "Verify that the system prevents access to a board's content if the user does not have the necessary access rights.",
+        "input": {
+          "board_id": 1
+        },
+        "expected": {
+          "outcome": "Board content retrieval failed",
+          "status": "Rejected",
+          "error": "Unauthorized Access"
+        }
+      },
+      {
+        "name": "Board Content Retrieval for Non-Existent Board",
+        "description": "Verify that the system handles cases where a user tries to retrieve content for a non-existent board.",
+        "input": {
+          "board_id": 999
+        },
+        "expected": {
+          "outcome": "Board content retrieval failed",
+          "status": "Rejected",
+          "error": "Board not found"
+        }
+      },
+      {
+        "name": "Internal Server Error During Board Content Retrieval",
+        "description": "Verify that the system provides an appropriate response in case of an internal server error during board content retrieval.",
+        "input": {
+          "board_id": 1
+        },
+        "expected": {
+          "outcome": "Board content retrieval failed",
+          "status": "Error",
+          "error": "Internal Server Error"
+        }
+      }
+    ]
+  },
+  {
+    "usecase": {
+      "name": "Add a List to a Board",
+      "scenario": "User adds a new list to an existing board with specific details such as list name, description, and deadline.",
+      "actors": "User",
+      "preconditions": "User is registered, logged in, and has access to the board.",
+      "steps": [
+        "User selects a board by its ID",
+        "User provides list details including name, description, and deadline",
+        "User submits the request to add the new list to the selected board"
+      ]
+    },
+    "testcases": [
+      {
+        "name": "Valid List Addition",
+        "description": "Verify that a user can add a new list with all required and valid details to an existing board.",
+        "input": {
+          "board_id": 4,
+          "list_name": "API & Architecture Presentation",
+          "list_description": "This presentation will be required to finalize the APIs of TaskFlow",
+          "list_deadline": "2024-01-23T00:00:00.000Z"
+        },
+        "expected": {
+          "outcome": "List addition successful",
+          "status": "Added",
+          "response": {
+            "list_id": 12,
+            "list_name": "API & Architecture Presentation"
+          }
+        }
+      },
+      {
+        "name": "Unauthorized List Addition",
+        "description": "Verify that the system prevents adding a list to a board if the user does not have the necessary access rights.",
+        "input": {
+          "board_id": 4,
+          "list_name": "API & Architecture Presentation",
+          "list_description": "This presentation will be required to finalize the APIs of TaskFlow",
+          "list_deadline": "2024-01-23T00:00:00.000Z"
+        },
+        "expected": {
+          "outcome": "List addition failed",
+          "status": "Rejected",
+          "error": "Unauthorized Access"
+        }
+      },
+      {
+        "name": "List Addition to Non-Existent Board",
+        "description": "Verify that the system handles cases where a user tries to add a list to a non-existent board.",
+        "input": {
+          "board_id": 999,
+          "list_name": "API & Architecture Presentation",
+          "list_description": "This presentation will be required to finalize the APIs of TaskFlow",
+          "list_deadline": "2024-01-23T00:00:00.000Z"
+        },
+        "expected": {
+          "outcome": "List addition failed",
+          "status": "Rejected",
+          "error": "Board not found"
+        }
+      },
+      {
+        "name": "Conflicting Input During List Addition",
+        "description": "Verify that the system handles cases where the list deadline conflicts with the board's deadline.",
+        "input": {
+          "board_id": 4,
+          "list_name": "API & Architecture Presentation",
+          "list_description": "This presentation will be required to finalize the APIs of TaskFlow",
+          "list_deadline": "2025-01-23T00:00:00.000Z"
+        },
+        "expected": {
+          "outcome": "List addition failed",
+          "status": "Rejected",
+          "error": "Conflicting Input",
+          "message": "List deadline cannot be further than board deadline"
+        }
+      },
+      {
+        "name": "Internal Server Error During List Addition",
+        "description": "Verify that the system provides an appropriate response in case of an internal server error during list addition.",
+        "input": {
+          "board_id": 4,
+          "list_name": "API & Architecture Presentation",
+          "list_description": "This presentation will be required to finalize the APIs of TaskFlow",
+          "list_deadline": "2024-01-23T00:00:00.000Z"
+        },
+        "expected": {
+          "outcome": "List addition failed",
+          "status": "Rejected",
+          "error": "Internal Server Error"
+        }
+      }
+    ]
+  },
+  {
+    "usecase": {
+      "name": "Update Board Settings",
+      "scenario": "User updates the settings of an existing board, including the board name, description, and deadline.",
+      "actors": "User",
+      "preconditions": "User is registered, logged in, and has admin rights to the specified board.",
+      "steps": [
+        "User selects a board by its ID",
+        "User provides updated settings for the board",
+        "User submits the request to update the board settings"
+      ]
+    },
+    "testcases": [
+      {
+        "name": "Successful Board Settings Update",
+        "description": "Verify that a user with admin rights can successfully update the settings of a board.",
+        "input": {
+          "board_id": 2,
+          "board_name": "Wazuh Research Project",
+          "board_description": "This board is created for coordination of the Wazuh research project",
+          "board_deadline": "2024-02-28T00:00:00.000Z"
+        },
+        "expected": {
+          "outcome": "Board settings update successful",
+          "status": "Updated"
+        }
+      },
+      {
+        "name": "Unauthorized Board Settings Update",
+        "description": "Verify that the system prevents updating settings of a board by a user without admin rights.",
+        "input": {
+          "board_id": 2,
+          "board_name": "Wazuh Research Project",
+          "board_description": "Unauthorized update attempt",
+          "board_deadline": "2024-02-28T00:00:00.000Z"
+        },
+        "expected": {
+          "outcome": "Board settings update failed",
+          "status": "Rejected",
+          "error": "Unauthorized Access"
+        }
+      },
+      {
+        "name": "Update Settings for Non-Existent Board",
+        "description": "Verify that the system handles cases where a user tries to update settings for a non-existent board.",
+        "input": {
+          "board_id": 999,
+          "board_name": "Non-Existent Board",
+          "board_description": "Invalid board",
+          "board_deadline": "2024-02-28T00:00:00.000Z"
+        },
+        "expected": {
+          "outcome": "Board settings update failed",
+          "status": "Rejected",
+          "error": "Board not found"
+        }
+      },
+      {
+        "name": "Internal Server Error During Board Settings Update",
+        "description": "Verify that the system provides an appropriate response in case of an internal server error during board settings update.",
+        "input": {
+          "board_id": 2,
+          "board_name": "Wazuh Research Project",
+          "board_description": "This board is created for coordination of the Wazuh research project",
+          "board_deadline": "2024-02-28T00:00:00.000Z"
+        },
+        "expected": {
+          "outcome": "Board settings update failed",
+          "status": "Error",
+          "error": "Internal Server Error"
+        }
+      }
+    ]
+  },
+  {
+    "usecase": {
+      "name": "Delete Board",
+      "scenario": "Board owner deletes a specific board.",
+      "actors": "User (Board Owner)",
+      "preconditions": "User is registered, logged in, and is the owner of the board to be deleted.",
+      "steps": [
+        "User selects a board by its ID",
+        "User requests to delete the board"
+      ]
+    },
+    "testcases": [
+      {
+        "name": "Successful Board Deletion",
+        "description": "Verify that the board owner can successfully delete their board.",
+        "input": {
+          "board_id": 3
+        },
+        "expected": {
+          "outcome": "Board deletion successful",
+          "status": "Deleted"
+        }
+      },
+      {
+        "name": "Unauthorized Board Deletion",
+        "description": "Verify that the system prevents deleting a board by a user who is not the owner.",
+        "input": {
+          "board_id": 3
+        },
+        "expected": {
+          "outcome": "Board deletion failed",
+          "status": "Rejected",
+          "error": "Unauthorized Access"
+        }
+      },
+      {
+        "name": "Deletion of Non-Existent Board",
+        "description": "Verify that the system handles cases where a user tries to delete a non-existent board.",
+        "input": {
+          "board_id": 999
+        },
+        "expected": {
+          "outcome": "Board deletion failed",
+          "status": "Rejected",
+          "error": "Board not found"
+        }
+      },
+      {
+        "name": "Internal Server Error During Board Deletion",
+        "description": "Verify that the system provides an appropriate response in case of an internal server error during board deletion.",
+        "input": {
+          "board_id": 3
+        },
+        "expected": {
+          "outcome": "Board deletion failed",
+          "status": "Error",
+          "error": "Internal Server Error"
+        }
+      }
+    ]
+  }
+]
