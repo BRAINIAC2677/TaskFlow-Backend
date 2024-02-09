@@ -12,17 +12,31 @@ router.post('/create', async (req, res) => {
         res.status(500).json({ error });
         return;
     }
-    const user_id = data.user.id;
+    const sender_id = data.user.id;
+    let sender_username = '';
+    let query = `
+    SELECT username FROM "UserProfile"
+    WHERE id = $1;
+    `;
+    try {
+        const data = await db.one(query, [sender_id]);
+        sender_username = data.username;
+        console.log('Sender username', sender_username);
+    } catch (error) {
+        console.error('Error: ', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+
     const { task_id, body, file_url } = req.body;
     console.log('Task ID', task_id, 'Body', body, 'File URL', file_url);
     // todo: validate whether the user has access to the task
-    const query = `
-    INSERT INTO "TaskMessage" (task_id, sender_id, body, file_url)
-    VALUES ($1, $2, $3, $4)
+    query = `
+    INSERT INTO "TaskMessage" (task_id, sender_id, body, file_url, sender_username)
+    VALUES ($1, $2, $3, $4, $5)
     RETURNING id;
     `;
     try {
-        const data = await db.one(query, [task_id, user_id, body, file_url]);
+        const data = await db.one(query, [task_id, sender_id, body, file_url, sender_username]);
         res.json(data);
         console.log('Task message created successfully');
     } catch (error) {
