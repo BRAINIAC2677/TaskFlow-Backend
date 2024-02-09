@@ -39,4 +39,50 @@ router.post("/get-usernames", async (req, res) => {
   }
 });
 
+router.post("/update", async (req, res) => {
+  console.log(req.body);
+
+  const { data, error } = await get_user(req);
+  if (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error });
+    return;
+  }
+
+  const user_id = data.user.id;
+  const { first_name, middle_name, last_name, username } = req.body;
+
+  const query = `
+    UPDATE
+      "UserProfile"
+    SET
+      first_name = $1,
+      middle_name = $2,
+      last_name = $3,
+      username = $4
+    WHERE
+      id = $5
+    RETURNING
+      id,
+      first_name,
+      middle_name,
+      last_name,
+      username
+    `;
+  try {
+    const data = await db.one(query, [
+      first_name,
+      middle_name,
+      last_name,
+      username,
+      user_id,
+    ]);
+    res.json(data);
+    console.log("Profile updated successfully");
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 export default router;

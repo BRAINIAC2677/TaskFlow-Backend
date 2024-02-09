@@ -35,6 +35,7 @@ router.post("/signup", async (req, res) => {
     email: email,
     password: password,
   });
+  console.log("New Registration", email, password);
   if (response1.error) {
     res.json(response1);
     return;
@@ -67,6 +68,7 @@ router.post("/signin", async (req, res) => {
     });
 
     if (error) {
+      console.error("Error: ", error);
       res.status(500).json(error);
       return;
     }
@@ -114,6 +116,31 @@ router.get("/user", async (req, res) => {
   } else {
     res.json(data);
   }
+});
+
+router.post("/change-password", async (req, res) => {
+  const { data, error } = await get_user(req);
+  if (error) {
+    res.json(error);
+    return;
+  }
+  const user_id = data.user.id;
+  const { current_password, new_password } = req.body;
+  console.log(
+    "Change password request received",
+    user_id,
+    current_password,
+    new_password
+  );
+  const { data: data1, error: error1 } = await supabase.auth.updateUser({
+    password: new_password,
+  });
+  if (error1) {
+    res.json(error1);
+    return;
+  }
+  console.log("Password updated successfully", data1);
+  res.json({ success: true, message: "Password updated successfully" });
 });
 
 export default router;
