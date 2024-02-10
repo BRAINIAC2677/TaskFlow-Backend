@@ -37,7 +37,7 @@ router.post("/signup", async (req, res) => {
   });
   console.log("New Registration", email, password);
   if (response1.error) {
-    res.json(response1);
+    res.status(500).json(response1);
     return;
   }
   console.log("Register request received");
@@ -53,7 +53,10 @@ router.post("/signup", async (req, res) => {
       },
     ])
     .select();
-  res.json(response2);
+  if (response2.error) {
+    res.status(500).json(response2);
+    return;
+  } else res.status(200).json(response2);
 });
 
 router.post("/signin", async (req, res) => {
@@ -86,7 +89,7 @@ router.post("/signin", async (req, res) => {
       userProfileData,
     };
 
-    res.json(responseData);
+    res.status(200).json(responseData);
     console.log("Signed in successfully", responseData);
   } catch (error) {
     console.error("Error: ", error);
@@ -98,49 +101,84 @@ router.post("/signout", async (req, res) => {
   // todo: jwt is not invalidated on signout until it expires
   const jwt = get_jwt(req);
   if (!jwt) {
-    res.json({ error: "Unauthorized" });
+    res.status(500).json({ error: "Unauthorized" });
     return;
   }
   const { error } = await supabase.auth.signOut(jwt);
   if (error) {
-    res.json(error);
+    res.status(500).json(error);
   } else {
-    res.json({ success: true, message: "Signed out" });
+    res.status(200).json({ success: true, message: "Signed out" });
   }
 });
 
 router.get("/user", async (req, res) => {
   const { data, error } = await get_user(req);
   if (error) {
-    res.json(error);
+    res.status(500).json(error);
   } else {
-    res.json(data);
+    res.status(200).json(data);
   }
 });
 
 router.post("/change-password", async (req, res) => {
-  const { data, error } = await get_user(req);
-  if (error) {
-    res.json(error);
+  console.log("Password change request received", req.body);
+  if (!req.body.type) {
+    res.status(500).json({ error: "Type not provided" });
     return;
   }
-  const user_id = data.user.id;
-  const { current_password, new_password } = req.body;
-  console.log(
-    "Change password request received",
-    user_id,
-    current_password,
-    new_password
-  );
+  if (req.body.type === "update") {
+    console.log("Update password request received");
+    const { data, error } = await get_user(req);
+    if (error) {
+      console.error("Error: ", error);
+      res.status(500).json(error);
+      return;
+    }
+  }
+
+  const { type, current_password, new_password } = req.body;
+  console.log(type, current_password, new_password);
   const { data: data1, error: error1 } = await supabase.auth.updateUser({
     password: new_password,
   });
   if (error1) {
-    res.json(error1);
+    console.error("Error: ", error1);
+    res.status(500).json(error1);
     return;
   }
   console.log("Password updated successfully", data1);
-  res.json({ success: true, message: "Password updated successfully" });
+  res.status(200).json({
+    success: true,
+    message: "Password updated successfully",
+    data: data1,
+  });
+});
+
+router.post("/reset-password", async (req, res) => {
+  const { email } = req.body;
+  console.log("Password reset request received", email);
+
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: "http://localhost:5173/reset-password/new-password",
+  });
+
+  if (error) {
+    res.status(500).json({
+      success: false,
+      message: "Password reset email not sent",
+      error: error,
+    });
+    console.error("Password reset email not sent", error);
+    return;
+  } else {
+    console.log("Password reset email sent", data);
+    res.status(200).json({
+      success: true,
+      message: "Password reset email sent",
+      data: data,
+    });
+  }
 });
 
 export default router;

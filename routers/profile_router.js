@@ -31,7 +31,7 @@ router.post("/get-usernames", async (req, res) => {
         `;
   try {
     const data = await db.any(query, [term, count]);
-    res.json(data);
+    res.status(200).json(data);
     console.log("Usernames retrieved successfully");
   } catch (error) {
     console.error(error);
@@ -77,7 +77,7 @@ router.post("/update", async (req, res) => {
       username,
       user_id,
     ]);
-    res.json(data);
+    res.status(200).json(data);
     console.log("Profile updated successfully");
   } catch (error) {
     console.error(error);

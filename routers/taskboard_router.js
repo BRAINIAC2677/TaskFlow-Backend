@@ -47,7 +47,7 @@ router.get("/get-all", async (req, res) => {
 
   try {
     const data = await db.any(query, [user_id]);
-    res.json(data);
+    res.status(200).json(data);
     console.log("All boards retrieved successfully");
   } catch (error) {
     console.error("Error: ", error);
@@ -78,7 +78,7 @@ router.post("/create", async (req, res) => {
       board_description,
     ]);
     const board_id = data.id;
-    res.json({ board_id });
+    res.status(200).json({ board_id });
 
     // adding the creator as owner of the board
     const query_2 = `
@@ -156,7 +156,7 @@ router.get("/get-content/:board_id", async (req, res) => {
 
   try {
     const data = await db.any(query, [board_id]);
-    res.json(data);
+    res.status(200).json(data);
     console.log("Board content retrieved successfully");
   } catch (error) {
     console.error("Error: ", error);

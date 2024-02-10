@@ -29,7 +29,7 @@ router.post("/create/:board_id", async (req, res) => {
       list_description,
       list_deadline,
     ]);
-    res.json(data);
+    res.status(200).json(data);
     console.log("List created successfully");
   } catch (error) {
     console.error("Error: ", error);

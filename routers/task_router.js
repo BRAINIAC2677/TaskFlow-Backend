@@ -48,7 +48,7 @@ router.post("/get-ranged-tasks", async (req, res) => {
 
   try {
     const data = await db.any(query, [user_id, start, end]);
-    res.json(data);
+    res.status(200).json(data);
     console.log("All tasks retrieved successfully");
   } catch (error) {
     console.error("Error: ", error);
@@ -86,7 +86,10 @@ router.post("/update-time", async (req, res) => {
 
   try {
     const data = await db.one(query, [start, end, id]);
-    res.json({ id: data.id, request_id });
+    res.status(200).json({
+      id: data.id,
+      request_id,
+    });
     console.log("Task timeline updated successfully");
   } catch (error) {
     console.error("Error: ", error);
