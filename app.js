@@ -11,18 +11,19 @@
 // import taskmessage_router from "./routers/taskmessage_router.js";
 // import ai_router from "./routers/ai_router.js";
 
-const express = require('express');
+const express = require("express");
 const { json, urlencoded } = express;
-const cors = require('cors');
-const dotenv = require('dotenv');
+const cors = require("cors");
+const dotenv = require("dotenv");
 
-const { router: auth_router } = require('./routers/auth_router.js');
-const profile_router = require('./routers/profile_router.js');
-const taskboard_router = require('./routers/taskboard_router.js');
-const tasklist_router = require('./routers/tasklist_router.js');
-const task_router = require('./routers/task_router.js');
-const taskmessage_router = require('./routers/taskmessage_router.js');
-const ai_router = require('./routers/ai_router.js');
+const { router: auth_router } = require("./routers/auth_router.js");
+const profile_router = require("./routers/profile_router.js");
+const taskboard_router = require("./routers/taskboard_router.js");
+const tasklist_router = require("./routers/tasklist_router.js");
+const task_router = require("./routers/task_router.js");
+const taskmessage_router = require("./routers/taskmessage_router.js");
+const ai_router = require("./routers/ai_router.js");
+const insight_router = require("./routers/insight_router.js");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -45,6 +46,7 @@ app.use("/list", tasklist_router);
 app.use("/task", task_router);
 app.use("/taskmessage", taskmessage_router);
 app.use("/ai", ai_router);
+app.use("/insight", insight_router);
 
 app.get("/", async (req, res) => {
   res.send("Express on Vercel");
