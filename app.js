@@ -23,6 +23,7 @@ const dotenv = require('dotenv');
 // const task_router = require('./routers/task_router.js');
 // const taskmessage_router = require('./routers/taskmessage_router.js');
 // const ai_router = require('./routers/ai_router.js');
+const db = require('./db.js');
 
 
 const app = express();
