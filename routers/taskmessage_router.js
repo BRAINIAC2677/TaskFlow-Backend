@@ -1,6 +1,11 @@
-import express from "express";
-import db from "../db.js";
-import { get_user } from "./auth_router.js";
+// import express from "express";
+// import db from "../db.js";
+// import { get_user } from "./auth_router.js";
+
+const express = require("express");
+const db = require("../db.js");
+const { get_user } = require("./auth_router.js");
+
 
 const router = express.Router();
 
@@ -120,4 +125,6 @@ router.delete("/delete", async (req, res) => {
   }
 });
 
-export default router;
+// export default router;
+module.exports = router;
+

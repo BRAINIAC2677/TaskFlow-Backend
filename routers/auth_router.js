@@ -1,7 +1,12 @@
-import express from "express";
-import dotenv from "dotenv";
-import db from "../db.js";
-import supabase from "../supabase.js";
+// import express from "express";
+// import dotenv from "dotenv";
+// import db from "../db.js";
+// import supabase from "../supabase.js";
+
+const express = require('express');
+const dotenv = require('dotenv');
+const db = require('../db.js');
+const supabase = require('../supabase.js');
 
 const router = express.Router();
 
@@ -19,7 +24,7 @@ function get_jwt(req) {
   return jwt;
 }
 
-export async function get_user(req) {
+async function get_user(req) {
   const jwt = get_jwt(req);
   if (!jwt) {
     return { data: null, error: "Unauthorized. No JWT provided." };
@@ -181,4 +186,8 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
-export default router;
+// export default router;
+module.exports = {
+  router,
+  get_user,
+};

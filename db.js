@@ -1,6 +1,11 @@
-import dotenv from "dotenv";
-import pgpromise from "pg-promise";
-import FileSystem from "fs";
+// import dotenv from "dotenv";
+// import pgpromise from "pg-promise";
+// import FileSystem from "fs";
+
+const dotenv = require('dotenv');
+const pgpromise = require('pg-promise');
+const FileSystem = require('fs');
+
 
 const pgp = pgpromise();
 
@@ -19,4 +24,5 @@ const connection = {
 };
 const db = pgp(connection);
 
-export default db;
+// export default db;
+module.exports = db;
