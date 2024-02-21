@@ -6,7 +6,7 @@ import db from "../db.js";
 dotenv.config();
 
 const router = express.Router();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY_brain });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 router.get("/task-chat", async (req, res) => {
   console.log("AI chat requested");
