@@ -35,13 +35,7 @@ app.use("/taskmessage", taskmessage_router);
 app.use("/ai", ai_router);
 
 app.get("/", async (req, res) => {
-  try {
-    const data = await db.any('SELECT * FROM "TaskBoard"');
-    res.status(200).json(data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
+  res.send("Express on Vercel");
 });
 
 app.listen(port, () => {
