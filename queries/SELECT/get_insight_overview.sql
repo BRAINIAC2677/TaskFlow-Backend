@@ -41,40 +41,25 @@ WHERE
     ta.user_id = '816cea00-f671-496f-ac80-c75ebbf1d85a'::uuid;
 
 -- Task Completed Today, This Week, This Month
-WITH LatestUpdate AS (
-    SELECT
-        tcli.task_id,
-        MAX(tcli.last_updated) AS max_last_updated
-    FROM
-        "TaskChecklistItem" tcli
-    GROUP BY
-        tcli.task_id
-),
-TaskWithLatestUpdate AS (
-    SELECT
-        t.id,
-        t.progress_rate,
-        lu.max_last_updated
-    FROM
-        "Task" t
-        LEFT JOIN LatestUpdate lu ON t.id = lu.task_id
-)
 SELECT
-    COALESCE(COUNT(DISTINCT CASE WHEN twlu.progress_rate >= 99
-                AND twlu.max_last_updated >= DATE_TRUNC('day', CURRENT_DATE) THEN
-                twlu.id
-            END), 0) AS today_task_count,
-    COALESCE(COUNT(DISTINCT CASE WHEN twlu.progress_rate >= 99
-                AND twlu.max_last_updated >= DATE_TRUNC('week', CURRENT_DATE) THEN
-                twlu.id
-            END), 0) AS this_week_task_count,
-    COALESCE(COUNT(DISTINCT CASE WHEN twlu.progress_rate >= 99
-                AND twlu.max_last_updated >= DATE_TRUNC('month', CURRENT_DATE) THEN
-                twlu.id
-            END), 0) AS this_month_task_count
+    COUNT(
+        CASE WHEN t.last_progressed::date = CURRENT_DATE
+            AND t.progress_rate >= 99 THEN
+            1
+        END) AS task_completed_today,
+    COUNT(
+        CASE WHEN t.progress_rate >= 99
+            AND t.last_progressed::date >= DATE_TRUNC('week', CURRENT_DATE) THEN
+            1
+        END) AS task_completed_this_week,
+    COUNT(
+        CASE WHEN t.progress_rate >= 99
+            AND t.last_progressed::date >= DATE_TRUNC('month', CURRENT_DATE) THEN
+            1
+        END) AS task_completed_this_month
 FROM
-    "TaskAssignment" ta
-JOIN TaskWithLatestUpdate twlu ON ta.task_id = twlu.id
+    "Task" t
+    JOIN "TaskAssignment" ta ON t.id = ta.task_id
 WHERE
     ta.user_id = '816cea00-f671-496f-ac80-c75ebbf1d85a'::uuid;
 

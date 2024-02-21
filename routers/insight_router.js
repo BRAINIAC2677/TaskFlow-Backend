@@ -39,21 +39,19 @@ router.get("/dashboard-stuff", async (req, res) => {
 
   // Get active board count
   const query2 = `
-    SELECT 
-      COUNT(DISTINCT(tb.id)) AS active_board_count
-    FROM
-      "TaskBoard" tb
-    JOIN
-      "TaskBoardMember" tbm ON tb.id = tbm.board_id
-    JOIN
-      "TaskList" tl ON tb.id = tl.board_id
-    JOIN
-      "Task" t ON tl.id = t.list_id
-    JOIN
-      "TaskChecklistItem" tci ON t.id = tci.task_id
-    WHERE
-      tci.last_updated > CURRENT_DATE - INTERVAL '7 days'
-      AND tbm.user_id = $1;
+  SELECT 
+    COUNT(DISTINCT(tb.id)) AS active_board_count
+  FROM
+    "TaskBoard" tb
+  JOIN
+    "TaskBoardMember" tbm ON tb.id = tbm.board_id
+  JOIN
+    "TaskList" tl ON tb.id = tl.board_id
+  JOIN
+    "Task" t ON tl.id = t.list_id
+  WHERE
+    t.last_progressed > CURRENT_DATE - INTERVAL '7 days'
+    AND tbm.user_id = $1;
     `;
 
   // upcoming task deadlines this week
@@ -158,42 +156,27 @@ router.get("/overview", async (req, res) => {
 
   // Tasks completed today, this week, this month
   const query3 = `
-    WITH LatestUpdate AS (
-        SELECT
-            tcli.task_id,
-            MAX(tcli.last_updated) AS max_last_updated
-        FROM
-            "TaskChecklistItem" tcli
-        GROUP BY
-            tcli.task_id
-    ),
-    TaskWithLatestUpdate AS (
-        SELECT
-            t.id,
-            t.progress_rate,
-            lu.max_last_updated
-        FROM
-            "Task" t
-            LEFT JOIN LatestUpdate lu ON t.id = lu.task_id
-    )
     SELECT
-        COALESCE(COUNT(DISTINCT CASE WHEN twlu.progress_rate >= 99
-                    AND twlu.max_last_updated >= DATE_TRUNC('day', CURRENT_DATE) THEN
-                    twlu.id
-                END), 0) AS today_task_count,
-        COALESCE(COUNT(DISTINCT CASE WHEN twlu.progress_rate >= 99
-                    AND twlu.max_last_updated >= DATE_TRUNC('week', CURRENT_DATE) THEN
-                    twlu.id
-                END), 0) AS this_week_task_count,
-        COALESCE(COUNT(DISTINCT CASE WHEN twlu.progress_rate >= 99
-                    AND twlu.max_last_updated >= DATE_TRUNC('month', CURRENT_DATE) THEN
-                    twlu.id
-                END), 0) AS this_month_task_count
+    COUNT(
+        CASE WHEN t.last_progressed::date = CURRENT_DATE
+            AND t.progress_rate >= 99 THEN
+            1
+        END) AS task_completed_today,
+    COUNT(
+        CASE WHEN t.progress_rate >= 99
+            AND t.last_progressed::date >= DATE_TRUNC('week', CURRENT_DATE) THEN
+            1
+        END) AS task_completed_this_week,
+    COUNT(
+        CASE WHEN t.progress_rate >= 99
+            AND t.last_progressed::date >= DATE_TRUNC('month', CURRENT_DATE) THEN
+            1
+        END) AS task_completed_this_month
     FROM
-        "TaskAssignment" ta
-    JOIN TaskWithLatestUpdate twlu ON ta.task_id = twlu.id
+      "Task" t
+      JOIN "TaskAssignment" ta ON t.id = ta.task_id
     WHERE
-        ta.user_id = '816cea00-f671-496f-ac80-c75ebbf1d85a'::uuid;
+      ta.user_id = $1;
     `;
 
   try {
@@ -208,9 +191,9 @@ router.get("/overview", async (req, res) => {
     let thisMonthTaskOverdue = data2.thismonthtaskoverdue;
 
     const data3 = await db.one(query3, [user_id]);
-    let todayTaskCompleted = data3.today_task_count;
-    let thisWeekTaskCompleted = data3.this_week_task_count;
-    let thisMonthTaskCompleted = data3.this_month_task_count;
+    let todayTaskCompleted = data3.task_completed_today;
+    let thisWeekTaskCompleted = data3.task_completed_this_week;
+    let thisMonthTaskCompleted = data3.task_completed_this_month;
 
     console.log(
       todayTaskDue,
