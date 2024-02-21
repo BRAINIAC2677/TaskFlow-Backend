@@ -4,9 +4,7 @@
   "description": "Backend API for TaskFlow",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Asif Azad, Mohammad Sadat Hossain",
   "license": "ISC",
