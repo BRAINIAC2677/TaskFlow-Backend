@@ -18,40 +18,31 @@ router.get("/get-all", async (req, res) => {
 
   const query = `
     SELECT
-    tb.id AS board_id,
-    tb.name AS board_name,
-    tb.due_timestamp,
-    tb.description,
-    COALESCE(AVG(t.progress_rate), 0) AS progress,
-    'null' AS status,
-    tbm.role,
-    (
+      a.id AS board_id,
+      a.name AS board_name,
+      a.due_timestamp,
+      a.description,
+      random() * 101 AS progress,
+      'null' AS status,
+      b.role,
+      (
         SELECT
-            JSON_BUILD_OBJECT('user_id', up.id, 'username', up.username) AS owner_info
+            JSON_BUILD_OBJECT('user_id', d.id, 'username', d.username) AS owner_info
         FROM
-            "TaskBoardMember" tbm_owner
-            JOIN "UserProfile" up ON up.id = tbm_owner.user_id
+            "TaskBoardMember" c
+            JOIN "UserProfile" d ON d.id = c.user_id
         WHERE
-            tbm_owner.role = 1
-            AND tbm_owner.board_id = tb.id
+            c.role = 1
+            AND c.board_id = a.id
         LIMIT
             1
-    ) AS owner_info
-  FROM
-    "TaskBoard" tb
-    JOIN "TaskBoardMember" tbm ON tb.id = tbm.board_id
-    LEFT JOIN "TaskList" l ON tb.id = l.board_id
-    LEFT JOIN "Task" t ON l.id = t.list_id
-  WHERE
-    tbm.user_id = $1
-  GROUP BY
-    tb.id,
-    tb.name,
-    tb.due_timestamp,
-    tb.description,
-    tbm.role
-  ORDER BY
-    board_id;
+      ) AS owner_info
+    FROM
+      "TaskBoard" a JOIN "TaskBoardMember" b ON a.id = b.board_id
+    WHERE
+      b.user_id = $1
+    ORDER BY
+      board_id;
     `;
 
   try {
