@@ -225,5 +225,79 @@ router.get("/overview", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+router.get("/weekly-task-completion", async (req, res) => {
+  console.log("Weekly task completion requested");
+  const { data, error } = await get_user(req);
+  if (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error });
+    return;
+  }
+  const user_id = data.user.id;
+
+  const query = `
+    WITH date_series AS (
+      SELECT
+          generate_series(
+              DATE_TRUNC(
+                  'week',
+                  (
+                      SELECT
+                          created_at
+                      FROM
+                          "UserProfile"
+                      WHERE
+                          id = $1
+                  )
+              ),
+              DATE_TRUNC('week', NOW()),
+              '1 week' :: INTERVAL
+          ) AS week_starting
+  ),
+  completed_tasks AS (
+      SELECT
+          DATE_TRUNC('week', t.last_progressed) AS week_starting,
+          COUNT(*) AS completed_task_count
+      FROM
+          "Task" t
+          JOIN "TaskAssignment" ta ON t.id = ta.task_id
+      WHERE
+          ta.user_id = $1
+          AND t.progress_rate >= 99
+          AND t.last_progressed >= (
+              SELECT
+                  created_at
+              FROM
+                  "UserProfile"
+              WHERE
+                  id = $1
+          )
+          AND t.last_progressed <= NOW()
+      GROUP BY
+          DATE_TRUNC('week', t.last_progressed)
+  )
+  SELECT
+      TO_CHAR(ds.week_starting, 'YYYY') || ' ' || TO_CHAR(ds.week_starting, 'Mon') || ' W' || TO_CHAR(ds.week_starting, 'W') AS label,
+      COALESCE(ct.completed_task_count, 0) AS completed_task_count
+  FROM
+      date_series ds
+      LEFT JOIN completed_tasks ct ON ds.week_starting = ct.week_starting
+  ORDER BY
+      ds.week_starting;
+  `;
+
+  try {
+    const data = await db.any(query, [user_id]);
+    res.status(200).json({
+      weekly_data: data,
+    });
+    console.log("Weekly task completion retrieved successfully");
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 // export default router;
 module.exports = router;
