@@ -100,7 +100,7 @@ router.post("/update-time", async (req, res) => {
   }
 });
 
-router.get("/get-detail/:task_id", async (req, res) => {
+router.get("/get-detail", async (req, res) => {
   const { data, error } = await get_user(req);
   if (error) {
     console.error("Error: ", error);
@@ -108,7 +108,7 @@ router.get("/get-detail/:task_id", async (req, res) => {
     return;
   }
   const user_id = data.user.id;
-  const task_id = req.params.task_id;
+  const { task_id } = req.query;
 
   const query = `
   SELECT

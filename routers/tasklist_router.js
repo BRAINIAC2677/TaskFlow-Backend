@@ -8,19 +8,17 @@ const dotenv = require("dotenv");
 const db = require("../db.js");
 const { get_user } = require("./auth_router.js");
 
-
 const router = express.Router();
 
 dotenv.config();
 
-router.post("/create/:board_id", async (req, res) => {
+router.post("/create", async (req, res) => {
   const { error } = await get_user(req);
   if (error) {
     res.status(500).json({ error });
     return;
   }
-  const board_id = req.params.board_id;
-  const { list_name, list_description, list_deadline } = req.body;
+  const { board_id, list_name, list_description, list_deadline } = req.body;
 
   const query = `
     INSERT INTO "TaskList" (board_id, name, description, due_timestamp)
@@ -45,4 +43,3 @@ router.post("/create/:board_id", async (req, res) => {
 
 // export default router;
 module.exports = router;
-
