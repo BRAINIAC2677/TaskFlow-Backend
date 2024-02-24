@@ -26,11 +26,10 @@ END;
 
 -- Insert the notification message into the Notification table
 INSERT INTO
-    "Notification" (BODY, url_1)
+    "Notification" (BODY)
 VALUES
     (
-        'You have been added to the board "' || v_board_name || '" as a ' || v_role,
-        '/boards/' || NEW .board_id
+        'You have been added to the board "' || v_board_name || '"<boards/' || NEW .board_id || '>' || ' as a ' || v_role
     ) RETURNING id INTO v_notification_id;
 
 -- Associate the notification with the user
@@ -75,16 +74,15 @@ BEGIN
 
 -- Insert the notification message into the Notification table
 INSERT INTO
-    "Notification" (BODY, url_1)
+    "Notification" (BODY)
 VALUES
     (
-        'You have been assigned the task "' || v_task_name || '"',
-        '/tasks/' || NEW .task_id
+        'You have been assigned the task "' || v_task_name || '"<tasks/' || NEW .task_id || '>'
     ) RETURNING id INTO v_notification_id;
 
 -- Associate the notification with the user
 INSERT INTO
-    "UserNotification" (user_id, notification_id, is_checked)
+    " UserNotification " (user_id, notification_id, is_checked)
 VALUES
     (NEW .user_id, v_notification_id, FALSE);
 
@@ -97,5 +95,5 @@ $$ LANGUAGE plpgsql;
 CREATE
 OR REPLACE TRIGGER trg_notify_user_assigned_to_task AFTER
 INSERT
-    ON "TaskAccess" FOR EACH ROW
+    ON " TaskAccess " FOR EACH ROW
     WHEN (NEW .access = 2) EXECUTE FUNCTION notify_user_assigned_to_task();
