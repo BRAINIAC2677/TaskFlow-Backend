@@ -22,6 +22,8 @@ OR REPLACE FUNCTION update_user_list_access() RETURNS TRIGGER AS $$ BEGIN
     WHERE
         tl.board_id = NEW .board_id;
 
+RETURN NEW;
+
 -- ON CONFLICT (list_id, user_id) DO NOTHING;
 ELSIF TG_OP = 'DELETE' THEN
 DELETE FROM
@@ -37,9 +39,9 @@ WHERE
             board_id = OLD .board_id
     );
 
-END IF;
+RETURN OLD;
 
-RETURN NEW;
+END IF;
 
 END;
 
@@ -72,6 +74,8 @@ OR REPLACE FUNCTION update_user_task_access() RETURNS TRIGGER AS $$ BEGIN
     WHERE
         t.list_id = NEW .list_id;
 
+RETURN NEW;
+
 -- ON CONFLICT (task_id, user_id) DO NOTHING;
 ELSIF TG_OP = 'DELETE' THEN
 DELETE FROM
@@ -87,9 +91,9 @@ WHERE
             list_id = OLD .list_id
     );
 
-END IF;
+RETURN OLD;
 
-RETURN NEW;
+END IF;
 
 END;
 

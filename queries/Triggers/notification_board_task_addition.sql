@@ -1,3 +1,6 @@
+BEGIN
+;
+
 -- Trigger function for adding a user to a board
 CREATE
 OR REPLACE FUNCTION notify_user_added_to_board() RETURNS TRIGGER AS $$
@@ -95,5 +98,7 @@ $$ LANGUAGE plpgsql;
 CREATE
 OR REPLACE TRIGGER trg_notify_user_assigned_to_task AFTER
 INSERT
-    ON " TaskAccess " FOR EACH ROW
+    ON "TaskAccess" FOR EACH ROW
     WHEN (NEW .access = 2) EXECUTE FUNCTION notify_user_assigned_to_task();
+
+COMMIT;
