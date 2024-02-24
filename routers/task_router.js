@@ -39,7 +39,7 @@ router.post("/get-ranged-tasks", async (req, res) => {
       END editable
     FROM
       "Task" a,
-      "TaskAssignment" b
+      "TaskAccess" b
     WHERE
       a.id = b.task_id
       AND b.user_id = $1

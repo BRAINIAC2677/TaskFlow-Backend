@@ -30,7 +30,7 @@ router.get("/dashboard-stuff", async (req, res) => {
       COUNT(DISTINCT CASE WHEN t.progress_rate >= 95 AND ta.task_id IS NOT NULL THEN t.id END) AS completed_tasks
     FROM
       "UserProfile" u
-      LEFT JOIN "TaskAssignment" ta ON u.id = ta.user_id
+      LEFT JOIN "TaskAccess" ta ON u.id = ta.user_id
       LEFT JOIN "Task" t ON t.id = ta.task_id
     WHERE u.id = $1
     GROUP BY
@@ -60,7 +60,7 @@ router.get("/dashboard-stuff", async (req, res) => {
       COUNT(t.id) AS upcoming_tasks
     FROM
       "Task" t
-      JOIN "TaskAssignment" ta ON t.id = ta.task_id
+      JOIN "TaskAccess" ta ON t.id = ta.task_id
     WHERE
       ta.user_id = $1
       AND t.due_timestamp >= DATE_TRUNC('week', CURRENT_DATE)
@@ -124,7 +124,7 @@ router.get("/overview", async (req, res) => {
         END) AS thisMonthTaskDue
     FROM
     "Task" t
-    JOIN "TaskAssignment" ta ON t.id = ta.task_id
+    JOIN "TaskAccess" ta ON t.id = ta.task_id
     WHERE
     ta.user_id = $1
   `;
@@ -149,7 +149,7 @@ router.get("/overview", async (req, res) => {
             END) AS thisMonthTaskOverdue
         FROM
             "Task" t
-            JOIN "TaskAssignment" ta ON t.id = ta.task_id
+            JOIN "TaskAccess" ta ON t.id = ta.task_id
         WHERE
             ta.user_id = $1
     `;
@@ -174,7 +174,7 @@ router.get("/overview", async (req, res) => {
         END) AS task_completed_this_month
     FROM
       "Task" t
-      JOIN "TaskAssignment" ta ON t.id = ta.task_id
+      JOIN "TaskAccess" ta ON t.id = ta.task_id
     WHERE
       ta.user_id = $1;
     `;
@@ -261,7 +261,7 @@ router.get("/weekly-task-completion", async (req, res) => {
           COUNT(*) AS completed_task_count
       FROM
           "Task" t
-          JOIN "TaskAssignment" ta ON t.id = ta.task_id
+          JOIN "TaskAccess" ta ON t.id = ta.task_id
       WHERE
           ta.user_id = $1
           AND t.progress_rate >= 99
@@ -292,7 +292,7 @@ router.get("/weekly-task-completion", async (req, res) => {
     res.status(200).json({
       weekly_data: data,
     });
-    console.log("Weekly task completion retrieved successfully");
+    console.log("Weekly task completion stats retrieved successfully");
   } catch (error) {
     console.error("Error: ", error);
     res.status(500).json({ error: "Internal Server Error" });

@@ -22,7 +22,7 @@ completed_tasks AS (
         COUNT(*) AS completed_task_count
     FROM
         "Task" t
-        JOIN "TaskAssignment" ta ON t.id = ta.task_id
+        JOIN "TaskAccess" ta ON t.id = ta.task_id
     WHERE
         ta.user_id = '816cea00-f671-496f-ac80-c75ebbf1d85a' :: uuid
         AND t.progress_rate >= 99
