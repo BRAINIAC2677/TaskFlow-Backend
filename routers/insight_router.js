@@ -228,6 +228,8 @@ router.get("/overview", async (req, res) => {
 
 router.get("/weekly-task-completion", async (req, res) => {
   console.log("Weekly task completion requested");
+  let { start_date, end_date } = req.query;
+
   const { data, error } = await get_user(req);
   if (error) {
     console.error("Error: ", error);
@@ -236,63 +238,156 @@ router.get("/weekly-task-completion", async (req, res) => {
   }
   const user_id = data.user.id;
 
+  const get_user_creation_date = async (user_id) => {
+    const query = `
+      SELECT
+          created_at
+      FROM
+          "UserProfile"
+      WHERE
+          id = $1;
+      `;
+    try {
+      const data = await db.one(query, [user_id]);
+      return data.created_at;
+    } catch (error) {
+      console.error("Error: ", error);
+      return new Date().toISOString();
+    }
+  };
+
+  start_date =
+    start_date === "-1"
+      ? await get_user_creation_date(user_id)
+      : new Date(start_date).toISOString();
+
+  end_date =
+    end_date === "-1"
+      ? new Date().toISOString()
+      : new Date(end_date).toISOString();
+
+  const query = `
+      WITH date_series AS (
+        SELECT generate_series(
+          DATE_TRUNC('week', $1::timestamp with time zone),
+          DATE_TRUNC('week', $2::timestamp with time zone),
+          '1 week'::interval
+        ) AS week_starting
+      ),
+      completed_tasks AS (
+        SELECT DATE_TRUNC('week', t.last_progressed) AS week_starting,
+        COUNT(*) AS completed_task_count
+        FROM "Task" t
+        JOIN "TaskAccess" ta ON t.id = ta.task_id
+        WHERE ta.user_id = $3
+        AND t.progress_rate >= 99
+        AND t.last_progressed BETWEEN $1 AND $2
+        GROUP BY week_starting
+      )
+      SELECT ds.week_starting, 
+        TO_CHAR(ds.week_starting, 'YYYY Mon') || ' W' || 
+        CASE
+          WHEN EXTRACT('week' FROM ds.week_starting + '6 days'::interval) > EXTRACT('week' FROM ds.week_starting)
+            THEN '4'
+          ELSE TO_CHAR(ds.week_starting, 'W')
+        END AS label,
+        COALESCE(ct.completed_task_count, 0) AS completed_task_count
+      FROM date_series ds
+      LEFT JOIN completed_tasks ct ON ds.week_starting = ct.week_starting
+      ORDER BY ds.week_starting;
+    `;
+
+  try {
+    const weekly_data = await db.any(query, [start_date, end_date, user_id]);
+    res.status(200).json({
+      weekly_data,
+    });
+    console.log("Weekly task completion stats retrieved successfully");
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.get("/daily-task-completion", async (req, res) => {
+  console.log("Daily task completion requested");
+  let { start_date, end_date, format } = req.query;
+
+  format = format || "DD Mon YY"; // Default format
+
+  const { data, error } = await get_user(req);
+  if (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error });
+    return;
+  }
+  const user_id = data.user.id;
+
+  // Get the user's account creation date
+  const get_user_creation_date = async (user_id) => {
+    const query = `
+      SELECT
+          created_at
+      FROM
+          "UserProfile"
+      WHERE
+          id = $1;
+      `;
+    try {
+      const data = await db.one(query, [user_id]);
+      return data.created_at;
+    } catch (error) {
+      console.error("Error: ", error);
+      return new Date().toISOString();
+    }
+  };
+  let userCreationDate = await get_user_creation_date(user_id);
+
+  start_date = start_date === "-1" ? userCreationDate : start_date;
+  end_date = end_date === "-1" ? new Date().toISOString() : end_date;
+
   const query = `
     WITH date_series AS (
       SELECT
           generate_series(
-              DATE_TRUNC(
-                  'week',
-                  (
-                      SELECT
-                          created_at
-                      FROM
-                          "UserProfile"
-                      WHERE
-                          id = $1
-                  )
-              ),
-              DATE_TRUNC('week', NOW()),
-              '1 week' :: INTERVAL
-          ) AS week_starting
-  ),
-  completed_tasks AS (
+              DATE_TRUNC('day', $1::timestamp with time zone),
+              DATE_TRUNC('day', $2::timestamp with time zone),
+              '1 day' :: INTERVAL
+          ) AS day
+    ),
+    completed_tasks AS (
       SELECT
-          DATE_TRUNC('week', t.last_progressed) AS week_starting,
+          t.last_progressed::date AS completed_day,
           COUNT(*) AS completed_task_count
       FROM
           "Task" t
           JOIN "TaskAccess" ta ON t.id = ta.task_id
       WHERE
-          ta.user_id = $1
+          ta.user_id = $3
           AND t.progress_rate >= 99
-          AND t.last_progressed >= (
-              SELECT
-                  created_at
-              FROM
-                  "UserProfile"
-              WHERE
-                  id = $1
-          )
-          AND t.last_progressed <= NOW()
+          AND t.last_progressed::date BETWEEN $1 AND $2
       GROUP BY
-          DATE_TRUNC('week', t.last_progressed)
-  )
-  SELECT
-      TO_CHAR(ds.week_starting, 'YYYY') || ' ' || TO_CHAR(ds.week_starting, 'Mon') || ' W' || TO_CHAR(ds.week_starting, 'W') AS label,
+          completed_day
+    )
+    SELECT
+      TO_CHAR(ds.day, $4) AS label,
       COALESCE(ct.completed_task_count, 0) AS completed_task_count
-  FROM
+    FROM
       date_series ds
-      LEFT JOIN completed_tasks ct ON ds.week_starting = ct.week_starting
-  ORDER BY
-      ds.week_starting;
+      LEFT JOIN completed_tasks ct ON ds.day = ct.completed_day
+    ORDER BY
+      ds.day;
   `;
 
   try {
-    const data = await db.any(query, [user_id]);
+    const data = await db.any(query, [start_date, end_date, user_id, format]);
+    const barchart_x = data.map((d) => d.label);
+    const barchart_y = data.map((d) => d.completed_task_count);
     res.status(200).json({
-      weekly_data: data,
+      barchart_x,
+      barchart_y,
     });
-    console.log("Weekly task completion stats retrieved successfully");
+    console.log("Daily task completion stats retrieved successfully");
   } catch (error) {
     console.error("Error: ", error);
     res.status(500).json({ error: "Internal Server Error" });
