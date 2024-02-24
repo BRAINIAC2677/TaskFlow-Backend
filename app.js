@@ -10,6 +10,7 @@
 // import task_router from "./routers/task_router.js";
 // import taskmessage_router from "./routers/taskmessage_router.js";
 // import ai_router from "./routers/ai_router.js";
+// import notif_router from "./routers/notif_router.js";
 
 const express = require("express");
 const { json, urlencoded } = express;
@@ -24,6 +25,7 @@ const task_router = require("./routers/task_router.js");
 const taskmessage_router = require("./routers/taskmessage_router.js");
 const ai_router = require("./routers/ai_router.js");
 const insight_router = require("./routers/insight_router.js");
+const notif_router = require("./routers/notif_router.js");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -47,9 +49,10 @@ app.use("/task", task_router);
 app.use("/taskmessage", taskmessage_router);
 app.use("/ai", ai_router);
 app.use("/insight", insight_router);
+app.use("/notification", notif_router);
 
 app.get("/", async (req, res) => {
-  res.send("Express on Vercel");
+  res.send("Express on Vercel / Render");
 });
 
 app.listen(port, () => {

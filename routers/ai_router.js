@@ -15,26 +15,14 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const openai_id = "e469e213-b6f2-424e-b6a9-af3f8d2f25d5";
 const openai_username = "OpenAI";
 
-async function create_taskmessage(
-  _task_id,
-  _sender_id,
-  _body,
-  _file_url,
-  _sender_username
-) {
+async function create_taskmessage(_task_id, _sender_id, _body, _file_url) {
   const query = `
-    INSERT INTO "TaskMessage" (task_id, sender_id, body, file_url, sender_username)
-    VALUES ($1, $2, $3, $4, $5)
+    INSERT INTO "TaskMessage" (task_id, sender_id, body, file_url)
+    VALUES ($1, $2, $3, $4)
     RETURNING id;
     `;
   try {
-    const data = await db.one(query, [
-      _task_id,
-      _sender_id,
-      _body,
-      _file_url,
-      _sender_username,
-    ]);
+    const data = await db.one(query, [_task_id, _sender_id, _body, _file_url]);
     const status = 200;
     const res_body = data;
     return { status, res_body };

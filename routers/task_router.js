@@ -39,7 +39,7 @@ router.post("/get-ranged-tasks", async (req, res) => {
       END editable
     FROM
       "Task" a,
-      "TaskAssignment" b
+      "TaskAccess" b
     WHERE
       a.id = b.task_id
       AND b.user_id = $1
@@ -94,6 +94,76 @@ router.post("/update-time", async (req, res) => {
       request_id,
     });
     console.log("Task timeline updated successfully");
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.get("/get-detail", async (req, res) => {
+  const { data, error } = await get_user(req);
+  if (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error });
+    return;
+  }
+  const user_id = data.user.id;
+  const { task_id } = req.query;
+
+  const query = `
+  SELECT
+  t.id,
+  t.name,
+  t.description,
+  t.start_timestamp AS start_time,
+  t.due_timestamp AS due_time,
+  (
+      SELECT
+          JSON_AGG(
+              JSON_BUILD_OBJECT('label_id', l.id, 'label_name', l.name)
+          )
+      FROM
+          "Label" l
+          JOIN "TaskLabel" tl ON tl.label_id = l.id
+      WHERE
+          tl.task_id = t.id
+  ) AS labels,
+  (
+      SELECT
+          JSON_AGG(
+              JSON_BUILD_OBJECT(
+                  'item_id',
+                  tcli.id,
+                  'item_name',
+                  tcli.name,
+                  'is_completed',
+                  tcli.is_completed
+              )
+          )
+      FROM
+          "TaskChecklistItem" tcli
+      WHERE
+          tcli.task_id = t.id
+  ) AS checklist_items,
+  t.label_color,
+  (
+      SELECT
+          access
+      FROM
+          "TaskAccess"
+      WHERE
+          task_id = t.id
+          AND user_id = $1
+  )
+FROM
+  "Task" t
+WHERE
+  t.id = $2;
+  `;
+
+  try {
+    const data = await db.one(query, [user_id, task_id]);
+    res.status(200).json(data);
   } catch (error) {
     console.error("Error: ", error);
     res.status(500).json({ error: "Internal Server Error" });

@@ -8,7 +8,6 @@ const dotenv = require("dotenv");
 const db = require("../db.js");
 const { get_user } = require("./auth_router.js");
 
-
 const router = express.Router();
 
 dotenv.config();
@@ -119,14 +118,14 @@ router.post("/create", async (req, res) => {
 });
 
 // using board_id as a route parameter
-router.get("/get-content/:board_id", async (req, res) => {
+router.get("/get-content", async (req, res) => {
   const { data, error } = await get_user(req);
   if (error) {
     res.status(500).json({ error });
     return;
   }
   const user_id = data.user.id;
-  const board_id = req.params.board_id;
+  const { board_id } = req.query;
 
   const query = `
   SELECT
@@ -181,5 +180,3 @@ router.get("/get-content/:board_id", async (req, res) => {
 
 // export default router;
 module.exports = router;
-
-

@@ -6,34 +6,28 @@ const express = require("express");
 const db = require("../db.js");
 const { get_user } = require("./auth_router.js");
 
-
 const router = express.Router();
 
-async function create_taskmessage(_task_id, _sender_id, _body, _file_url, _sender_username) {
+async function create_taskmessage(_task_id, _sender_id, _body, _file_url) {
   const query = `
-    INSERT INTO "TaskMessage" (task_id, sender_id, body, file_url, sender_username)
-    VALUES ($1, $2, $3, $4, $5)
+    INSERT INTO "TaskMessage" (task_id, sender_id, body, file_url)
+    VALUES ($1, $2, $3, $4)
     RETURNING id;
     `;
   try {
-    const data = await db.one(query, [
-      _task_id,
-      _sender_id,
-      _body,
-      _file_url,
-      _sender_username,
-    ]);
+    const data = await db.one(query, [_task_id, _sender_id, _body, _file_url]);
     const status = 200;
     const res_body = data;
     return { status, res_body };
   } catch (error) {
     const status = 500;
+    console.error("Error: ", error);
     const res_body = { error: "Internal Server Error" };
     return { status, res_body };
   }
 }
 
-
+// Task message creation
 router.post("/create", async (req, res) => {
   console.log("Task message creation requested");
   const { data, error } = await get_user(req);
@@ -60,7 +54,12 @@ router.post("/create", async (req, res) => {
   const { task_id, body, file_url } = req.body;
   console.log("Task ID", task_id, "Body", body, "File URL", file_url);
   // todo: validate whether the user has access to the task
-  const { status, res_body } = await create_taskmessage(task_id, sender_id, body, file_url, sender_username);
+  const { status, res_body } = await create_taskmessage(
+    task_id,
+    sender_id,
+    body,
+    file_url
+  );
   console.log(status, res_body);
   return res.status(status).json(res_body);
 });
@@ -71,7 +70,8 @@ router.get("/retrieve-all", async (req, res) => {
   console.log("Task ID", task_id);
   // todo: validate whether the user has access to the task
   const query = `
-    SELECT * FROM "TaskMessage"
+    SELECT tm.created_at, tm.body, tm.file_url, up.username AS sender_username, up.dp_url AS sender_dp_url
+    FROM "TaskMessage" tm JOIN "UserProfile" up ON tm.sender_id = up.id
     WHERE task_id = $1;
     `;
   try {
@@ -127,4 +127,3 @@ router.delete("/delete", async (req, res) => {
 
 // export default router;
 module.exports = router;
-

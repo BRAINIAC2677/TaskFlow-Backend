@@ -12,7 +12,7 @@ SELECT
     ) AS completed_tasks
 FROM
     "UserProfile" u
-    LEFT JOIN "TaskAssignment" ta ON u.id = ta.user_id
+    LEFT JOIN "TaskAccess" ta ON u.id = ta.user_id
     LEFT JOIN "Task" t ON t.id = ta.task_id
 WHERE
     u.id = $1
