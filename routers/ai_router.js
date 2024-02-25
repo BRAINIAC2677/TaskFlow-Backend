@@ -1,12 +1,7 @@
-// import express from "express";
-// import OpenAI from "openai";
-// import dotenv from "dotenv";
-// import db from "../db.js";
-
-const express = require("express");
-const OpenAI = require("openai");
-const dotenv = require("dotenv");
-const db = require("../db.js");
+import express from "express";
+import OpenAI from "openai";
+import dotenv from "dotenv";
+import db from "../db.js";
 
 dotenv.config();
 
@@ -82,5 +77,4 @@ router.get("/task-chat", async (req, res) => {
   }
 });
 
-// export default router;
-module.exports = router;
+export default router;

@@ -1,12 +1,7 @@
-// import express from "express";
-// import dotenv from "dotenv";
-// import db from "../db.js";
-// import { get_user } from "./auth_router.js";
-
-const express = require("express");
-const dotenv = require("dotenv");
-const db = require("../db.js");
-const { get_user } = require("./auth_router.js");
+import express from "express";
+import dotenv from "dotenv";
+import db from "../db.js";
+import { get_user } from "./auth_router.js";
 
 const router = express.Router();
 
@@ -394,5 +389,4 @@ router.get("/daily-task-completion", async (req, res) => {
   }
 });
 
-// export default router;
-module.exports = router;
+export default router;
