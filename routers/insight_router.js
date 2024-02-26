@@ -7,7 +7,7 @@ const router = express.Router();
 
 dotenv.config();
 
-router.get("/dashboard-stuff", async (req, res) => {
+router.get("/dashboard-summary", async (req, res) => {
   console.log("Dashboard stuff requested");
   const { data, error } = await get_user(req);
   if (error) {
@@ -93,8 +93,8 @@ router.get("/dashboard-stuff", async (req, res) => {
   }
 });
 
-router.get("/overview", async (req, res) => {
-  console.log("Overview requested");
+router.get("/task-completion", async (req, res) => {
+  console.log("Task completion Info requested");
   const { data, error } = await get_user(req);
   if (error) {
     console.error("Error: ", error);
@@ -214,7 +214,7 @@ router.get("/overview", async (req, res) => {
       this_month_task_completed: thisMonthTaskCompleted,
     });
 
-    console.log("Overview retrieved successfully");
+    console.log("Task completion info retrieved successfully");
   } catch (error) {
     console.error("Error: ", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -279,14 +279,8 @@ router.get("/weekly-task-completion", async (req, res) => {
         AND t.last_progressed BETWEEN $1 AND $2
         GROUP BY week_starting
       )
-      SELECT ds.week_starting, 
-        TO_CHAR(ds.week_starting, 'YYYY Mon') || ' W' || 
-        CASE
-          WHEN EXTRACT('week' FROM ds.week_starting + '6 days'::interval) > EXTRACT('week' FROM ds.week_starting)
-            THEN '4'
-          ELSE TO_CHAR(ds.week_starting, 'W')
-        END AS label,
-        COALESCE(ct.completed_task_count, 0) AS completed_task_count
+      SELECT ds.week_starting AS start_date,
+        COALESCE(ct.completed_task_count, 0) AS done
       FROM date_series ds
       LEFT JOIN completed_tasks ct ON ds.week_starting = ct.week_starting
       ORDER BY ds.week_starting;
@@ -294,9 +288,7 @@ router.get("/weekly-task-completion", async (req, res) => {
 
   try {
     const weekly_data = await db.any(query, [start_date, end_date, user_id]);
-    res.status(200).json({
-      weekly_data,
-    });
+    res.status(200).json(weekly_data);
     console.log("Weekly task completion stats retrieved successfully");
   } catch (error) {
     console.error("Error: ", error);
@@ -306,9 +298,7 @@ router.get("/weekly-task-completion", async (req, res) => {
 
 router.get("/daily-task-completion", async (req, res) => {
   console.log("Daily task completion requested");
-  let { start_date, end_date, format } = req.query;
-
-  format = format || "DD Mon YY"; // Default format
+  let { start_date, end_date } = req.query;
 
   const { data, error } = await get_user(req);
   if (error) {
@@ -342,47 +332,85 @@ router.get("/daily-task-completion", async (req, res) => {
   end_date = end_date === "-1" ? new Date().toISOString() : end_date;
 
   const query = `
-    WITH date_series AS (
-      SELECT
-          generate_series(
-              DATE_TRUNC('day', $1::timestamp with time zone),
-              DATE_TRUNC('day', $2::timestamp with time zone),
-              '1 day' :: INTERVAL
-          ) AS day
-    ),
-    completed_tasks AS (
-      SELECT
-          t.last_progressed::date AS completed_day,
-          COUNT(*) AS completed_task_count
-      FROM
-          "Task" t
-          JOIN "TaskAccess" ta ON t.id = ta.task_id
-      WHERE
-          ta.user_id = $3
-          AND t.progress_rate >= 99
-          AND t.last_progressed::date BETWEEN $1 AND $2
-      GROUP BY
-          completed_day
-    )
+  WITH date_series AS (
+    SELECT generate_series(
+      DATE_TRUNC('day', $1::timestamp with time zone),
+      DATE_TRUNC('day', $2::timestamp with time zone),
+      '1 day'::interval
+    ) AS day
+  ),
+  completed_tasks AS (
     SELECT
-      TO_CHAR(ds.day, $4) AS label,
-      COALESCE(ct.completed_task_count, 0) AS completed_task_count
+      t.last_progressed::date AS completed_day,
+      COUNT(*) AS completed_task_count
     FROM
-      date_series ds
-      LEFT JOIN completed_tasks ct ON ds.day = ct.completed_day
-    ORDER BY
-      ds.day;
+      "Task" t
+      JOIN "TaskAccess" ta ON t.id = ta.task_id
+    WHERE
+      ta.user_id = $3
+      AND t.progress_rate >= 99
+      AND t.last_progressed::date BETWEEN $1 AND $2
+    GROUP BY
+      completed_day
+  )
+  SELECT ds.day AS date,
+    COALESCE(ct.completed_task_count, 0) AS done
+  FROM date_series ds
+  LEFT JOIN completed_tasks ct ON ds.day = ct.completed_day
+  ORDER BY ds.day;
   `;
 
   try {
-    const data = await db.any(query, [start_date, end_date, user_id, format]);
-    const barchart_x = data.map((d) => d.label);
-    const barchart_y = data.map((d) => d.completed_task_count);
-    res.status(200).json({
-      barchart_x,
-      barchart_y,
-    });
+    const data = await db.any(query, [start_date, end_date, user_id]);
+    res.status(200).json(data);
     console.log("Daily task completion stats retrieved successfully");
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.get("/task-progression", async (req, res) => {
+  console.log("Task progression requested");
+
+  const { data, error } = await get_user(req);
+  if (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error });
+    return;
+  }
+  const user_id = data.user.id;
+
+  const query = `
+    WITH progress_ranges AS (
+      SELECT generate_series(0, 90, 10) AS progress_min,
+            generate_series(10, 100, 10) AS progress_max
+    ),
+    user_tasks AS (
+      SELECT t.id, t.progress_rate
+      FROM "Task" t
+      JOIN "TaskAccess" ta ON t.id = ta.task_id
+      WHERE ta.user_id = $1
+    ),
+    epsilon AS (
+      SELECT 0.0001 AS value -- Epsilon value to avoid overlap
+    )
+    SELECT 
+      pr.progress_min || '-' || pr.progress_max || '%' AS progress_range,
+      COUNT(ut.id) AS task_count
+    FROM 
+      progress_ranges pr
+    LEFT JOIN user_tasks ut ON 
+      ut.progress_rate >= pr.progress_min AND 
+      (ut.progress_rate < pr.progress_max OR (pr.progress_max = 100 AND ut.progress_rate <= pr.progress_max))
+    GROUP BY pr.progress_min, pr.progress_max
+    ORDER BY pr.progress_min;
+  `;
+
+  try {
+    const data = await db.any(query, [user_id]);
+    res.status(200).json(data);
+    console.log("Task progression stats retrieved successfully");
   } catch (error) {
     console.error("Error: ", error);
     res.status(500).json({ error: "Internal Server Error" });
