@@ -417,4 +417,32 @@ router.get("/task-progression", async (req, res) => {
   }
 });
 
+router.get("/get-board-ranges", async (req, res) => {
+  console.log("Board ranges requested");
+
+  const { data, error } = await get_user(req);
+  if (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error });
+    return;
+  }
+  const user_id = data.user.id;
+
+  const query = `
+    SELECT b.id, b.name, b.created_at AS start_time, b.due_timestamp AS end_time
+    FROM "TaskBoard" b JOIN "TaskBoardMember" bm ON b.id = bm.board_id
+    WHERE bm.user_id = $1
+    ORDER BY b.created_at DESC;
+  `;
+
+  try {
+    const data = await db.any(query, [user_id]);
+    res.status(200).json(data);
+    console.log("Board ranges retrieved successfully");
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 export default router;
