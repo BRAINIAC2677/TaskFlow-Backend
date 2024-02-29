@@ -63,6 +63,42 @@ router.post("/taskcover-upload", upload.single("taskcover"), async (req, res) =>
 });
 
 
+router.delete("/taskcover-delete", async (req, res) => {
+  const { data, error } = await get_user(req);
+  if (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error });
+    return;
+  }
+
+  const user_id = data.user.id;
+  //todo: check if user has access to the task
+  const { task_id } = req.query;
+  const bucket_name = 'task_files';
+  const file_path = `${task_id}/taskcover`;
+  const { data: delete_data, error: delete_error } = await supabase.storage.from(bucket_name).remove([file_path]);
+  if (delete_error) {
+    return res.status(500).json({ error: 'Failed to delete file from Supabase Storage' });
+  }
+  console.log("delete_data", delete_data);
+
+  const query = `
+  UPDATE "Task"
+  SET cover_url = NULL
+  WHERE id = $1;
+  `;
+
+  try {
+    await db.any(query, [task_id]);
+    res.status(200).json({ success_msg: "Photo deleted and URL updated successfully" });
+    console.log("Photo deleted and URL updated successfully");
+  } catch (db_error) {
+    console.error(db_error);
+    res.status(500).json({ error: "Failed to update task with new photo URL" });
+  }
+});
+
+
 router.post("/get-ranged-tasks", async (req, res) => {
   console.log("All tasks asked for calendar view page");
   const { data, error } = await get_user(req);
