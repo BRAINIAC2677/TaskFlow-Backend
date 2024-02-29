@@ -1,11 +1,13 @@
 import express from "express";
 import dotenv from "dotenv";
+import multer from "multer";
 import db from "../db.js";
+import supabase from "../supabase.js";
 import { get_user } from "./auth_router.js";
 
-const router = express.Router();
-
 dotenv.config();
+const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
 router.post("/get-usernames", async (req, res) => {
   const { term, count } = req.body;
@@ -82,6 +84,56 @@ router.post("/update", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
+router.post('/dp-upload', upload.single('dp'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+  console.log("req.file", req.file);
+
+  const { data: user_data, error: user_error } = await get_user(req);
+  if (user_error || !user_data) {
+    return res.status(500).json({ error: "Failed to retrieve user data" });
+  }
+
+  const user_id = user_data.user.id;
+  let file_path = `${user_id}/${req.file.fieldname}`;
+  const file_extension = req.file.originalname.split('.').pop();
+  if (file_extension) {
+    file_path += `.${file_extension}`;
+  }
+
+  const bucket_name = 'user_public_files';
+  const { data: upload_data, error: upload_error } = await supabase.storage.from(bucket_name).upload(file_path, req.file.buffer, {
+    contentType: req.file.mimetype,
+    upsert: true,
+  });
+
+  if (upload_error) {
+    return res.status(500).json({ error: 'Failed to upload file to Supabase Storage' });
+  }
+  console.log("upload_data", upload_data)
+
+  const supabase_url = process.env.SUPABASEURL;
+  const url = `${supabase_url}/storage/v1/object/public/${upload_data.fullPath}`;
+  console.log("File uploaded successfully", url);
+
+  try {
+    const update_user_query = `
+          UPDATE "UserProfile"
+          SET dp_url = $1
+          WHERE id = $2
+          RETURNING dp_url;
+      `;
+    const updated_user = await db.one(update_user_query, [url, user_id]);
+    res.status(200).json({ url: updated_user.dp_url });
+    console.log("Photo uploaded and URL updated successfully");
+  } catch (db_error) {
+    console.error(db_error);
+    res.status(500).json({ error: "Failed to update user profile with new photo URL" });
   }
 });
 
