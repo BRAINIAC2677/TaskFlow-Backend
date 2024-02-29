@@ -87,6 +87,37 @@ router.post("/update", async (req, res) => {
   }
 });
 
+router.post('/dp-delete', async (req, res) => {
+  const { data: user_data, error: user_error } = await get_user(req);
+  if (user_error || !user_data) {
+    return res.status(500).json({ error: "Failed to retrieve user data" });
+  }
+
+  const user_id = user_data.user.id;
+  const bucket_name = 'user_public_files';
+  const file_path = `${user_id}/dp`;
+  const { data: delete_data, error: delete_error } = await supabase.storage.from(bucket_name).remove([file_path]);
+  if (delete_error) {
+    return res.status(500).json({ error: 'Failed to delete file from Supabase Storage' });
+  }
+  console.log("delete_data", delete_data);
+  try {
+    const update_user_query = `
+          UPDATE "UserProfile"
+          SET dp_url = $1
+          WHERE id = $2
+          RETURNING dp_url;
+      `;
+    const fallback_dp_url = "https://ewpdvixqmeqmsvkuctat.supabase.co/storage/v1/object/public/user_public_files/fallback.png";
+    const updated_user = await db.one(update_user_query, [fallback_dp_url, user_id]);
+    res.status(200).json({ url: updated_user.dp_url });
+    console.log("Photo deleted and URL updated successfully");
+  } catch (db_error) {
+    console.error(db_error);
+    res.status(500).json({ error: "Failed to update user profile with new photo URL" });
+  }
+});
+
 
 router.post('/dp-upload', upload.single('dp'), async (req, res) => {
   if (!req.file) {
@@ -101,10 +132,6 @@ router.post('/dp-upload', upload.single('dp'), async (req, res) => {
 
   const user_id = user_data.user.id;
   let file_path = `${user_id}/${req.file.fieldname}`;
-  const file_extension = req.file.originalname.split('.').pop();
-  if (file_extension) {
-    file_path += `.${file_extension}`;
-  }
 
   const bucket_name = 'user_public_files';
   const { data: upload_data, error: upload_error } = await supabase.storage.from(bucket_name).upload(file_path, req.file.buffer, {
