@@ -12,6 +12,7 @@ import taskmessage_router from "./routers/taskmessage_router.js";
 import ai_router from "./routers/ai_router.js";
 import insight_router from "./routers/insight_router.js";
 import notif_router from "./routers/notif_router.js";
+import misc_router from "./routers/misc_router.js";
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use("/taskmessage", taskmessage_router);
 app.use("/ai", ai_router);
 app.use("/insight", insight_router);
 app.use("/notification", notif_router);
+app.use("/misc", misc_router);
 
 app.get("/", async (req, res) => {
   res.send("TaskFlow on Render");
