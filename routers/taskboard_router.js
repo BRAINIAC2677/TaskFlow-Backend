@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import db from "../db.js";
+import supabase from "../supabase.js";
 import { get_user } from "./auth_router.js";
 
 const router = express.Router();
@@ -144,7 +145,9 @@ router.get("/get-content", async (req, res) => {
                   'task_deadline',
                   t.due_timestamp,
                   'task_label_color',
-                  t.label_color
+                  t.label_color,
+                  'task_cover_url',
+                  t.cover_url
                 )
               )
             FROM

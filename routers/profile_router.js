@@ -87,7 +87,7 @@ router.post("/update", async (req, res) => {
   }
 });
 
-router.post('/dp-delete', async (req, res) => {
+router.delete('/dp-delete', async (req, res) => {
   const { data: user_data, error: user_error } = await get_user(req);
   if (user_error || !user_data) {
     return res.status(500).json({ error: "Failed to retrieve user data" });

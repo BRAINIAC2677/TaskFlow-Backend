@@ -1,11 +1,67 @@
 import express from "express";
 import dotenv from "dotenv";
+import multer from "multer";
 import db from "../db.js";
+import supabase from "../supabase.js";
 import { get_user } from "./auth_router.js";
 
-const router = express.Router();
-
 dotenv.config();
+const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage() });
+
+router.post("/taskcover-upload", upload.single("taskcover"), async (req, res) => {
+  if (!req.file) {
+    res.status(500).json({ error: "No file uploaded" });
+    return;
+  }
+  if (!req.body.task_id) {
+    res.status(500).json({ error: "No task id provided" });
+    return;
+  }
+  console.log(req.file);
+
+  const { data: user_data, error: user_error } = await get_user(req);
+
+  if (user_error || !user_data) {
+    return res.status(500).json({ error: "Failed to retrieve user data" });
+  }
+
+  // todo: check if user has access to the task
+  const task_id = req.body.task_id;
+  let file_path = `${task_id}/${req.file.fieldname}`;
+
+  const bucket_name = 'task_files';
+  const { data: upload_data, error: upload_error } = await supabase.storage.from(bucket_name).upload(file_path, req.file.buffer, {
+    contentType: req.file.mimetype,
+    upsert: true,
+  });
+
+  if (upload_error) {
+    return res.status(500).json({ error: 'Failed to upload file to Supabase Storage' });
+  }
+  console.log("upload_data", upload_data)
+
+  const supabase_url = process.env.SUPABASEURL;
+  const url = `${supabase_url}/storage/v1/object/public/${upload_data.fullPath}`;
+  console.log("File uploaded successfully", url);
+
+  try {
+    const update_task_query = `
+          UPDATE "Task"
+          SET cover_url = $1
+          WHERE id = $2
+          RETURNING cover_url;
+      `;
+    const updated_task = await db.one(update_task_query, [url, task_id]);
+    res.status(200).json({ url: updated_task.cover_url });
+    console.log("Photo uploaded and URL updated successfully");
+  } catch (db_error) {
+    console.error(db_error);
+    res.status(500).json({ error: "Failed to update task with new photo URL" });
+  }
+
+});
+
 
 router.post("/get-ranged-tasks", async (req, res) => {
   console.log("All tasks asked for calendar view page");
