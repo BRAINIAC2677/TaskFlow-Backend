@@ -122,21 +122,13 @@ router.get("/user", async (req, res) => {
 });
 
 router.post("/change-password", async (req, res) => {
-  console.log("Password change request received", req.body);
-  if (!req.body.type) {
-    res.status(500).json({ error: "Type not provided" });
+  console.log("Password change request received", req);
+  const { data, error } = await get_user(req);
+  if (error) {
+    console.error("Error: ", error);
+    res.status(500).json(error);
     return;
   }
-  if (req.body.type === "update") {
-    console.log("Update password request received");
-    const { data, error } = await get_user(req);
-    if (error) {
-      console.error("Error: ", error);
-      res.status(500).json(error);
-      return;
-    }
-  }
-
   const { type, current_password, new_password } = req.body;
   console.log(type, current_password, new_password);
   const { data: data1, error: error1 } = await supabase.auth.updateUser({
@@ -159,8 +151,11 @@ router.post("/reset-password", async (req, res) => {
   const { email } = req.body;
   console.log("Password reset request received", email);
 
+  const devURL = "http://localhost:5173/";
+  const productionURL = "https://taskflow-2c96.onrender.com/";
   const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: "http://localhost:5173/reset-password/new-password",
+    redirectTo: productionURL + "reset-password/new-password",
+    // redirectTo: devURL + "reset-password/new-password",
   });
 
   if (error) {
