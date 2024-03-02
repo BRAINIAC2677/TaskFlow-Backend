@@ -202,6 +202,7 @@ router.get("/get-detail", async (req, res) => {
   t.id,
   t.name,
   t.description,
+  t.cover_url AS cover_url,
   t.start_timestamp AS start_time,
   t.due_timestamp AS due_time,
   (
