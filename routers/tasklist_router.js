@@ -36,4 +36,29 @@ router.post("/create", async (req, res) => {
   }
 });
 
+router.post("/update", async (req, res) => {
+  const { error } = await get_user(req);
+  if (error) {
+    res.status(500).json({ error });
+    return;
+  }
+  const { list_id, list_name, list_deadline } = req.body;
+
+  const query = `
+    UPDATE "TaskList"
+    SET name = $1, due_timestamp = $2
+    WHERE id = $3
+    RETURNING id;
+  `;
+
+  try {
+    const data = await db.one(query, [list_name, list_deadline, list_id]);
+    res.status(200).json(data);
+    console.log("List updated successfully");
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 export default router;

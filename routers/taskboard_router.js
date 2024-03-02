@@ -127,12 +127,17 @@ router.get("/get-content", async (req, res) => {
   SELECT
     tb.id AS board_id,
     tb.name AS board_name,
+    tb.due_timestamp AS board_deadline,
+    tb.description AS board_description,
+    tbm.role AS board_access, 
     json_agg(
       json_build_object(
           'list_id',
           tl.id,
           'list_name',
           tl.name,
+          'list_deadline',
+          tl.due_timestamp,
           'list_tasks',
           (
             SELECT
@@ -158,18 +163,52 @@ router.get("/get-content", async (req, res) => {
         )
       ) AS board_lists
     FROM
-      "TaskBoard" tb JOIN "TaskList" tl ON tl.board_id = tb.id
+      ("TaskBoard" tb JOIN "TaskList" tl ON tl.board_id = tb.id)
+      JOIN "TaskBoardMember" tbm ON tbm.board_id = tb.id AND tbm.user_id = $2
     WHERE
       tb.id = $1
     GROUP BY
       tb.id,
-      tb.name;
+      tb.name,
+      tbm.role;
     `;
 
   try {
-    const data = await db.any(query, [board_id]);
+    const data = await db.any(query, [board_id, user_id]);
     res.status(200).json(data);
     console.log("Board content retrieved successfully");
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.post("/update", async (req, res) => {
+  const { data, error } = await get_user(req);
+  if (error) {
+    res.status(500).json({ error });
+    return;
+  }
+  const user_id = data.user.id;
+  const { board_id, board_name, board_deadline, board_description } = req.body;
+
+  console.log("Board update for board_id: ", board_id);
+
+  const query = `
+    UPDATE "TaskBoard"
+    SET name = $1, due_timestamp = $2, description = $3
+    WHERE id = $4;
+  `;
+
+  try {
+    await db.none(query, [
+      board_name,
+      board_deadline,
+      board_description,
+      board_id,
+    ]);
+    res.status(200).json({ message: "Board updated successfully" });
+    console.log("Board updated successfully");
   } catch (error) {
     console.error("Error: ", error);
     res.status(500).json({ error: "Internal Server Error" });
