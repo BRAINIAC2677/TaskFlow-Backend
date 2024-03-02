@@ -129,49 +129,52 @@ router.get("/get-content", async (req, res) => {
     tb.name AS board_name,
     tb.due_timestamp AS board_deadline,
     tb.description AS board_description,
-    tbm.role AS board_access, 
+    tbm.role AS board_access,
     json_agg(
       json_build_object(
-          'list_id',
-          tl.id,
-          'list_name',
-          tl.name,
-          'list_deadline',
-          tl.due_timestamp,
-          'list_tasks',
-          (
+          'list_id', tl.id,
+          'list_name', tl.name,
+          'list_deadline', tl.due_timestamp,
+          'list_tasks', (
             SELECT
               json_agg(
                 json_build_object(
-                  'task_id',
-                  t.id,
-                  'task_name',
-                  t.name,
-                  'task_deadline',
-                  t.due_timestamp,
-                  'task_label_color',
-                  t.label_color,
-                  'task_cover_url',
-                  t.cover_url
+                  'task_id', t.id,
+                  'task_name', t.name,
+                  'task_deadline', t.due_timestamp,
+                  'task_label_color', t.label_color,
+                  'task_cover_url', t.cover_url
                 )
               )
-            FROM
-              "Task" t
-            WHERE
-              t.list_id = tl.id
+            FROM "Task" t
+            WHERE t.list_id = tl.id
           )
+      )
+    ) AS board_lists,
+    (SELECT json_agg(
+        json_build_object(
+            'user_id', tbm_inner.user_id,
+            'username', u.username,
+            'full_name', u.first_name || ' ' || u.middle_name || ' ' || u.last_name,
+            'role', tbm_inner.role,
+            'dp_url', u.dp_url
         )
-      ) AS board_lists
-    FROM
-      ("TaskBoard" tb JOIN "TaskList" tl ON tl.board_id = tb.id)
-      JOIN "TaskBoardMember" tbm ON tbm.board_id = tb.id AND tbm.user_id = $2
-    WHERE
-      tb.id = $1
-    GROUP BY
-      tb.id,
-      tb.name,
-      tbm.role;
-    `;
+      )
+      FROM "TaskBoardMember" tbm_inner
+      JOIN "UserProfile" u ON u.id = tbm_inner.user_id
+      WHERE tbm_inner.board_id = tb.id
+    ) AS board_members
+  FROM
+    "TaskBoard" tb
+    JOIN "TaskList" tl ON tl.board_id = tb.id
+    JOIN "TaskBoardMember" tbm ON tbm.board_id = tb.id
+  WHERE
+    tb.id = $1 AND tbm.user_id = $2
+  GROUP BY
+    tb.id,
+    tb.name,
+    tbm.role;
+  `;
 
   try {
     const data = await db.any(query, [board_id, user_id]);
@@ -209,6 +212,36 @@ router.post("/update", async (req, res) => {
     ]);
     res.status(200).json({ message: "Board updated successfully" });
     console.log("Board updated successfully");
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.post("/update-member-access", async (req, res) => {
+  const { data, error } = await get_user(req);
+  if (error) {
+    res.status(500).json({ error });
+    return;
+  }
+  const user_id = data.user.id;
+  const { board_id, member_id, prev_role, new_role } = req.body;
+
+  if (new_role === 1) {
+    res.status(400).json({ error: "Owner role cannot be assigned" });
+    return;
+  }
+
+  const query = `
+    UPDATE "TaskBoardMember"
+    SET role = $1
+    WHERE board_id = $2 AND user_id = $3;
+  `;
+
+  try {
+    await db.none(query, [new_role, board_id, member_id]);
+    res.status(200).json({ message: "Member access updated successfully" });
+    console.log("Member access updated successfully");
   } catch (error) {
     console.error("Error: ", error);
     res.status(500).json({ error: "Internal Server Error" });

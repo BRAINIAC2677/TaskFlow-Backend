@@ -9,59 +9,66 @@ dotenv.config();
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-router.post("/taskcover-upload", upload.single("taskcover"), async (req, res) => {
-  if (!req.file) {
-    res.status(500).json({ error: "No file uploaded" });
-    return;
-  }
-  if (!req.body.task_id) {
-    res.status(500).json({ error: "No task id provided" });
-    return;
-  }
-  console.log(req.file);
+router.post(
+  "/taskcover-upload",
+  upload.single("taskcover"),
+  async (req, res) => {
+    if (!req.file) {
+      res.status(500).json({ error: "No file uploaded" });
+      return;
+    }
+    if (!req.body.task_id) {
+      res.status(500).json({ error: "No task id provided" });
+      return;
+    }
+    console.log(req.file);
 
-  const { data: user_data, error: user_error } = await get_user(req);
+    const { data: user_data, error: user_error } = await get_user(req);
 
-  if (user_error || !user_data) {
-    return res.status(500).json({ error: "Failed to retrieve user data" });
-  }
+    if (user_error || !user_data) {
+      return res.status(500).json({ error: "Failed to retrieve user data" });
+    }
 
-  // todo: check if user has access to the task
-  const task_id = req.body.task_id;
-  let file_path = `${task_id}/${req.file.fieldname}`;
+    // todo: check if user has access to the task
+    const task_id = req.body.task_id;
+    let file_path = `${task_id}/${req.file.fieldname}`;
 
-  const bucket_name = 'task_files';
-  const { data: upload_data, error: upload_error } = await supabase.storage.from(bucket_name).upload(file_path, req.file.buffer, {
-    contentType: req.file.mimetype,
-    upsert: true,
-  });
+    const bucket_name = "task_files";
+    const { data: upload_data, error: upload_error } = await supabase.storage
+      .from(bucket_name)
+      .upload(file_path, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: true,
+      });
 
-  if (upload_error) {
-    return res.status(500).json({ error: 'Failed to upload file to Supabase Storage' });
-  }
-  console.log("upload_data", upload_data)
+    if (upload_error) {
+      return res
+        .status(500)
+        .json({ error: "Failed to upload file to Supabase Storage" });
+    }
+    console.log("upload_data", upload_data);
 
-  const supabase_url = process.env.SUPABASEURL;
-  const url = `${supabase_url}/storage/v1/object/public/${upload_data.fullPath}`;
-  console.log("File uploaded successfully", url);
+    const supabase_url = process.env.SUPABASEURL;
+    const url = `${supabase_url}/storage/v1/object/public/${upload_data.fullPath}`;
+    console.log("File uploaded successfully", url);
 
-  try {
-    const update_task_query = `
+    try {
+      const update_task_query = `
           UPDATE "Task"
           SET cover_url = $1
-          WHERE id = $2
-          RETURNING cover_url;
+          WHERE id = $2;
       `;
-    const updated_task = await db.one(update_task_query, [url, task_id]);
-    res.status(200).json({ url: updated_task.cover_url });
-    console.log("Photo uploaded and URL updated successfully");
-  } catch (db_error) {
-    console.error(db_error);
-    res.status(500).json({ error: "Failed to update task with new photo URL" });
+      const updated_task = await db.any(update_task_query, [url, task_id]);
+      res.status(200).json({ url: updated_task.cover_url });
+      console.log("Photo uploaded and URL updated successfully");
+    } catch (db_error) {
+      console.error(db_error);
+      res
+        .status(500)
+        .json({ error: "Failed to update task with new photo URL" });
+    }
   }
-
-});
-
+);
 
 router.delete("/taskcover-delete", async (req, res) => {
   const { data, error } = await get_user(req);
@@ -74,11 +81,15 @@ router.delete("/taskcover-delete", async (req, res) => {
   const user_id = data.user.id;
   //todo: check if user has access to the task
   const { task_id } = req.query;
-  const bucket_name = 'task_files';
+  const bucket_name = "task_files";
   const file_path = `${task_id}/taskcover`;
-  const { data: delete_data, error: delete_error } = await supabase.storage.from(bucket_name).remove([file_path]);
+  const { data: delete_data, error: delete_error } = await supabase.storage
+    .from(bucket_name)
+    .remove([file_path]);
   if (delete_error) {
-    return res.status(500).json({ error: 'Failed to delete file from Supabase Storage' });
+    return res
+      .status(500)
+      .json({ error: "Failed to delete file from Supabase Storage" });
   }
   console.log("delete_data", delete_data);
 
@@ -90,14 +101,15 @@ router.delete("/taskcover-delete", async (req, res) => {
 
   try {
     await db.any(query, [task_id]);
-    res.status(200).json({ success_msg: "Photo deleted and URL updated successfully" });
+    res
+      .status(200)
+      .json({ success_msg: "Photo deleted and URL updated successfully" });
     console.log("Photo deleted and URL updated successfully");
   } catch (db_error) {
     console.error(db_error);
     res.status(500).json({ error: "Failed to update task with new photo URL" });
   }
 });
-
 
 router.post("/get-ranged-tasks", async (req, res) => {
   console.log("All tasks asked for calendar view page");
