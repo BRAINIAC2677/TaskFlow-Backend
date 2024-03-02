@@ -224,22 +224,35 @@ router.post("/update-member-access", async (req, res) => {
     res.status(500).json({ error });
     return;
   }
-  const user_id = data.user.id;
-  const { board_id, member_id, prev_role, new_role } = req.body;
+  const { board_id, user_id, prev_role, new_role } = req.body;
 
   if (new_role === 1) {
     res.status(400).json({ error: "Owner role cannot be assigned" });
     return;
   }
 
-  const query = `
+  let query;
+
+  if (new_role === -1) {
+    query = `
+      DELETE FROM "TaskBoardMember"
+      WHERE board_id = $2 AND user_id = $1;
+    `;
+  } else if (prev_role === -1) {
+    query = `
+      INSERT INTO "TaskBoardMember" (user_id, board_id, role)
+      VALUES ($1, $2, $3);
+    `;
+  } else {
+    query = `
     UPDATE "TaskBoardMember"
-    SET role = $1
-    WHERE board_id = $2 AND user_id = $3;
+    SET role = $3
+    WHERE board_id = $2 AND user_id = $1;
   `;
+  }
 
   try {
-    await db.none(query, [new_role, board_id, member_id]);
+    await db.none(query, [user_id, board_id, new_role]);
     res.status(200).json({ message: "Member access updated successfully" });
     console.log("Member access updated successfully");
   } catch (error) {
