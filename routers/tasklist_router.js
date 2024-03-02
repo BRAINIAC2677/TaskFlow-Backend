@@ -61,4 +61,28 @@ router.post("/update", async (req, res) => {
   }
 });
 
+router.delete("/delete", async (req, res) => {
+  const { error } = await get_user(req);
+  if (error) {
+    res.status(500).json({ error });
+    return;
+  }
+  const { list_id } = req.body;
+
+  const query = `
+    DELETE FROM "TaskList"
+    WHERE id = $1
+    RETURNING id;
+  `;
+
+  try {
+    const data = await db.one(query, [list_id]);
+    res.status(200).json(data);
+    console.log("List deleted successfully");
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 export default router;
