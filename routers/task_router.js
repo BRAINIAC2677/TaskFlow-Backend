@@ -431,4 +431,30 @@ router.delete("/delete-checklist-item", async (req, res) => {
   }
 });
 
+router.delete("/delete", async (req, res) => {
+  console.log("Delete task requested");
+  const { data, error } = await get_user(req);
+  if (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error });
+    return;
+  }
+  const user_id = data.user.id;
+  const { task_id } = req.body;
+  console.log("Task ID: ", task_id);
+
+  const query = `
+    DELETE FROM "Task"
+    WHERE id = $1;
+    `;
+  try {
+    await db.any(query, [task_id]);
+    res.status(200).json({ success_msg: "Task deleted successfully" });
+    console.log("Task deleted successfully");
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 export default router;

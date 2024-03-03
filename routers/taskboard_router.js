@@ -178,18 +178,31 @@ router.get("/get-content", async (req, res) => {
 
   try {
     const data = await db.any(query, [board_id, user_id]);
-    data[0].board_lists.sort((a, b) => {
-      if (a.list_deadline === null) return 1;
-      if (b.list_deadline === null) return -1;
-      return new Date(a.list_deadline) - new Date(b.list_deadline);
-    });
-    data[0].board_lists.forEach((list) => {
-      list.list_tasks.sort((a, b) => {
-        if (a.task_deadline === null) return 1;
-        if (b.task_deadline === null) return -1;
-        return new Date(a.task_deadline) - new Date(b.task_deadline);
+    if (
+      data &&
+      Array.isArray(data) &&
+      data.length > 0 &&
+      Array.isArray(data[0].board_lists)
+    ) {
+      data[0].board_lists.forEach((board_list) => {
+        // Make sure board_list.list_tasks is an array before sorting
+        if (Array.isArray(board_list.list_tasks)) {
+          board_list.list_tasks.sort((a, b) => {
+            if (a.task_deadline === null) return 1;
+            if (b.task_deadline === null) return -1;
+            return new Date(a.task_deadline) - new Date(b.task_deadline);
+          });
+        }
       });
-    });
+
+      // Sort board_lists after ensuring each list_tasks is sorted
+      data[0].board_lists.sort((a, b) => {
+        if (a.list_deadline === null) return 1;
+        if (b.list_deadline === null) return -1;
+        return new Date(a.list_deadline) - new Date(b.list_deadline);
+      });
+    }
+
     console.log(data);
     res.status(200).json(data);
     console.log("Board content retrieved successfully");
