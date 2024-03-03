@@ -278,4 +278,103 @@ WHERE
   }
 });
 
+router.post("/update", async (req, res) => {
+  console.log(req.body);
+
+  const { data, error } = await get_user(req);
+  if (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error });
+    return;
+  }
+
+  const user_id = data.user.id;
+  const { task_id, name, description, start_timestamp, due_timestamp } = req.body;
+  console.log(req.body)
+
+  const query = `
+    UPDATE
+      "Task"
+    SET
+      name = $1,
+      description = $2,
+      start_timestamp = $3,
+      due_timestamp = $4
+    WHERE
+      id = $5;
+    `;
+  try {
+    await db.any(query, [
+      name,
+      description,
+      start_timestamp,
+      due_timestamp,
+      task_id,
+    ]);
+    res.status(200).json({ success_msg: "Task updated successfully" });
+    console.log("Task updated successfully");
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+);
+
+router.post("/create-checklist-item", async (req, res) => {
+  console.log("Create checklist item requested");
+  const { data, error } = await get_user(req);
+  if (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error });
+    return;
+  }
+  const user_id = data.user.id;
+  // todo: check if user has access to the task
+  const { task_id, name } = req.body;
+
+  const query = `
+    INSERT INTO "TaskChecklistItem" (task_id, name)
+    VALUES ($1, $2)
+    RETURNING id;
+  `;
+
+  try {
+    const data = await db.one(query, [task_id, name]);
+    res.status(200).json({ id: data.id });
+    console.log("Checklist item created successfully");
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+);
+
+router.delete("/delete-checklist-item", async (req, res) => {
+  console.log("Delete checklist item requested");
+  const { data, error } = await get_user(req);
+  if (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error });
+    return;
+  }
+  const user_id = data.user.id;
+  // todo: check if user has access to the task
+  const { item_id } = req.query;
+
+  const query = `
+    DELETE FROM "TaskChecklistItem"
+    WHERE id = $1;
+  `;
+  try {
+    await db.any(query, [item_id]);
+    res.status(200).json({ success_msg: "Checklist item deleted successfully" });
+    console.log("Checklist item deleted successfully");
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+);
+
+
 export default router;
