@@ -29,6 +29,10 @@ router.post(
       return res.status(500).json({ error: "Failed to retrieve user data" });
     }
 
+    console.log("User data", user_data);
+    console.log("user error", user_error);
+
+
     // todo: check if user has access to the task
     const task_id = req.body.task_id;
     let file_path = `${task_id}/${req.file.fieldname}`;
@@ -40,6 +44,9 @@ router.post(
         contentType: req.file.mimetype,
         upsert: true,
       });
+
+    console.log("upload_data", upload_data);
+    console.log("upload_error", upload_error);
 
     if (upload_error) {
       return res
@@ -56,9 +63,10 @@ router.post(
       const update_task_query = `
           UPDATE "Task"
           SET cover_url = $1
-          WHERE id = $2;
+          WHERE id = $2
+          RETURNING cover_url;
       `;
-      const updated_task = await db.any(update_task_query, [url, task_id]);
+      const updated_task = await db.one(update_task_query, [url, task_id]);
       res.status(200).json({ url: updated_task.cover_url });
       console.log("Photo uploaded and URL updated successfully");
     } catch (db_error) {
