@@ -32,7 +32,6 @@ router.post(
     console.log("User data", user_data);
     console.log("user error", user_error);
 
-
     // todo: check if user has access to the task
     const task_id = req.body.task_id;
     let file_path = `${task_id}/${req.file.fieldname}`;
@@ -319,8 +318,15 @@ router.post("/update", async (req, res) => {
   }
 
   const user_id = data.user.id;
-  const { task_id, name, description, start_timestamp, due_timestamp } = req.body;
-  console.log(req.body)
+  const {
+    task_id,
+    name,
+    description,
+    start_timestamp,
+    due_timestamp,
+    checklist_items,
+  } = req.body;
+  console.log(req.body);
 
   const query = `
     UPDATE
@@ -341,14 +347,33 @@ router.post("/update", async (req, res) => {
       due_timestamp,
       task_id,
     ]);
+
+    if (checklist_items) {
+      checklist_items.forEach(async (item) => {
+        const item_id = item.item_id;
+        const item_name = item.item_name;
+        const is_completed = item.is_completed;
+        if (item_id) {
+          const update_query = `
+            UPDATE
+              "TaskChecklistItem"
+            SET
+              is_completed = $1
+            WHERE
+              id = $2;
+          `;
+          await db.any(update_query, [is_completed, item_id]);
+        }
+      });
+    }
+
     res.status(200).json({ success_msg: "Task updated successfully" });
     console.log("Task updated successfully");
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
-}
-);
+});
 
 router.post("/create-checklist-item", async (req, res) => {
   console.log("Create checklist item requested");
@@ -376,8 +401,7 @@ router.post("/create-checklist-item", async (req, res) => {
     console.error("Error: ", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
-}
-);
+});
 
 router.delete("/delete-checklist-item", async (req, res) => {
   console.log("Delete checklist item requested");
@@ -397,14 +421,14 @@ router.delete("/delete-checklist-item", async (req, res) => {
   `;
   try {
     await db.any(query, [item_id]);
-    res.status(200).json({ success_msg: "Checklist item deleted successfully" });
+    res
+      .status(200)
+      .json({ success_msg: "Checklist item deleted successfully" });
     console.log("Checklist item deleted successfully");
   } catch (error) {
     console.error("Error: ", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
-}
-);
-
+});
 
 export default router;
