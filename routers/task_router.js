@@ -270,4 +270,34 @@ WHERE
   }
 });
 
+router.post("/create", async (req, res) => {
+  const { error } = await get_user(req);
+  if (error) {
+    res.status(500).json({ error });
+    return;
+  }
+  const { list_id, task_name, start_time, end_time, description } = req.body;
+
+  const query = `
+    INSERT INTO "Task" (list_id, name, description, start_timestamp, due_timestamp)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING id;
+  `;
+
+  try {
+    const data = await db.one(query, [
+      list_id,
+      task_name,
+      description,
+      start_time,
+      end_time,
+    ]);
+    res.status(200).json(data);
+    console.log("Task created successfully");
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 export default router;
