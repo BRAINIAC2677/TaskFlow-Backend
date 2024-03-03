@@ -143,6 +143,7 @@ router.post('/dp-upload', upload.single('dp'), async (req, res) => {
     return res.status(500).json({ error: 'Failed to upload file to Supabase Storage' });
   }
   console.log("upload_data", upload_data)
+  console.log("upload_error", upload_error);
 
   const supabase_url = process.env.SUPABASEURL;
   const url = `${supabase_url}/storage/v1/object/public/${upload_data.fullPath}`;
