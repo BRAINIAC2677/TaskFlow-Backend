@@ -44,7 +44,7 @@ app.get("/", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Listening on port ${port}`);
+  console.log(`Hello! Listening on port ${port}`);
 });
 
 export default app;
