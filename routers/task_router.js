@@ -318,15 +318,8 @@ router.post("/update", async (req, res) => {
   }
 
   const user_id = data.user.id;
-  const {
-    task_id,
-    name,
-    description,
-    start_timestamp,
-    due_timestamp,
-    checklist_items,
-  } = req.body;
-  console.log(req.body);
+  const { id, name, description, start_time, due_time, checklist_items } =
+    req.body;
 
   const query = `
     UPDATE
@@ -337,21 +330,14 @@ router.post("/update", async (req, res) => {
       start_timestamp = $3,
       due_timestamp = $4
     WHERE
-      id = $5;
+      id = $5
     `;
   try {
-    await db.any(query, [
-      name,
-      description,
-      start_timestamp,
-      due_timestamp,
-      task_id,
-    ]);
+    await db.any(query, [name, description, start_time, due_time, id]);
 
     if (checklist_items) {
       checklist_items.forEach(async (item) => {
         const item_id = item.item_id;
-        const item_name = item.item_name;
         const is_completed = item.is_completed;
         if (item_id) {
           const update_query = `
