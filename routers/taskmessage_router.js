@@ -68,7 +68,8 @@ router.get("/retrieve-all", async (req, res) => {
   const query = `
     SELECT tm.created_at, tm.body, tm.file_url, up.username AS sender_username, up.dp_url AS sender_dp_url
     FROM "TaskMessage" tm JOIN "UserProfile" up ON tm.sender_id = up.id
-    WHERE task_id = $1;
+    WHERE task_id = $1
+    ORDER BY tm.created_at ASC;
     `;
   try {
     const data = await db.any(query, [task_id]);
